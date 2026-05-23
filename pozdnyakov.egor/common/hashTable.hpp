@@ -23,8 +23,8 @@ namespace pozdnyakov
   private:
     Vector< List< std::pair< Key, Value > > > buckets_;
     std::size_t size_;
-    Hash hash_obj_;
-    Equal equal_obj_;
+    Hash hashObj_;
+    Equal equalObj_;
 
   public:
     class iterator
@@ -32,30 +32,31 @@ namespace pozdnyakov
       friend class HashTable;
 
     private:
-      Vector< List< std::pair< Key, Value > > > *buckets_ptr_;
-      std::size_t bucket_idx_;
-      LIter< std::pair< Key, Value > > list_it_;
+      Vector< List< std::pair< Key, Value > > > *bucketsPtr_;
+      std::size_t bucketIdx_;
+      LIter< std::pair< Key, Value > > listIt_;
 
       void skipEmpty()
       {
-        if (!buckets_ptr_)
+        if (!bucketsPtr_) {
           return;
-        while (bucket_idx_ < buckets_ptr_->size()) {
-          if (list_it_ != (*buckets_ptr_)[bucket_idx_].end()) {
+        }
+        while (bucketIdx_ < bucketsPtr_->size()) {
+          if (listIt_ != (*bucketsPtr_)[bucketIdx_].end()) {
             return;
           }
-          ++bucket_idx_;
-          if (bucket_idx_ < buckets_ptr_->size()) {
-            list_it_ = (*buckets_ptr_)[bucket_idx_].begin();
+          ++bucketIdx_;
+          if (bucketIdx_ < bucketsPtr_->size()) {
+            listIt_ = (*bucketsPtr_)[bucketIdx_].begin();
           }
         }
-        bucket_idx_ = buckets_ptr_->size();
+        bucketIdx_ = bucketsPtr_->size();
       }
 
-      iterator(Vector< List< std::pair< Key, Value > > > *b_ptr, std::size_t idx, LIter< std::pair< Key, Value > > it):
-        buckets_ptr_(b_ptr),
-        bucket_idx_(idx),
-        list_it_(it)
+      iterator(Vector< List< std::pair< Key, Value > > > *bPtr, std::size_t idx, LIter< std::pair< Key, Value > > it):
+        bucketsPtr_(bPtr),
+        bucketIdx_(idx),
+        listIt_(it)
       {
         skipEmpty();
       }
@@ -68,23 +69,24 @@ namespace pozdnyakov
       using reference = std::pair< Key, Value > &;
 
       iterator():
-        buckets_ptr_(nullptr),
-        bucket_idx_(0),
-        list_it_()
+        bucketsPtr_(nullptr),
+        bucketIdx_(0),
+        listIt_()
       {}
 
       reference operator*() const
       {
-        return *list_it_;
+        return *listIt_;
       }
+
       pointer operator->() const
       {
-        return &(*list_it_);
+        return &(*listIt_);
       }
 
       iterator &operator++()
       {
-        ++list_it_;
+        ++listIt_;
         skipEmpty();
         return *this;
       }
@@ -98,9 +100,10 @@ namespace pozdnyakov
 
       bool operator==(const iterator &other) const
       {
-        if (bucket_idx_ == buckets_ptr_->size() && other.bucket_idx_ == other.buckets_ptr_->size())
+        if (bucketIdx_ == bucketsPtr_->size() && other.bucketIdx_ == other.bucketsPtr_->size()) {
           return true;
-        return bucket_idx_ == other.bucket_idx_ && list_it_ == other.list_it_;
+        }
+        return bucketIdx_ == other.bucketIdx_ && listIt_ == other.listIt_;
       }
 
       bool operator!=(const iterator &other) const
@@ -119,10 +122,10 @@ namespace pozdnyakov
         rehash(16);
       }
 
-      std::size_t idx = hash_obj_(k) % buckets_.size();
+      std::size_t idx = hashObj_(k) % buckets_.size();
 
       for (auto it = buckets_[idx].begin(); it != buckets_[idx].end(); ++it) {
-        if (equal_obj_((*it).first, k)) {
+        if (equalObj_((*it).first, k)) {
           (*it).second = std::move(v);
           return;
         }
@@ -138,14 +141,14 @@ namespace pozdnyakov
         throw std::runtime_error("Hash table is empty");
       }
 
-      std::size_t idx = hash_obj_(k) % buckets_.size();
+      std::size_t idx = hashObj_(k) % buckets_.size();
 
       List< std::pair< Key, Value > > newList;
       Value droppedVal;
       bool found = false;
 
       for (auto it = buckets_[idx].begin(); it != buckets_[idx].end(); ++it) {
-        if (equal_obj_((*it).first, k)) {
+        if (equalObj_((*it).first, k)) {
           droppedVal = std::move((*it).second);
           found = true;
         } else {
@@ -164,11 +167,12 @@ namespace pozdnyakov
 
     bool has(Key k)
     {
-      if (buckets_.size() == 0)
+      if (buckets_.size() == 0) {
         return false;
-      std::size_t idx = hash_obj_(k) % buckets_.size();
+      }
+      std::size_t idx = hashObj_(k) % buckets_.size();
       for (auto it = buckets_[idx].begin(); it != buckets_[idx].end(); ++it) {
-        if (equal_obj_((*it).first, k)) {
+        if (equalObj_((*it).first, k)) {
           return true;
         }
       }
@@ -177,11 +181,12 @@ namespace pozdnyakov
 
     Value &at(Key k)
     {
-      if (buckets_.size() == 0)
+      if (buckets_.size() == 0) {
         throw std::runtime_error("Key not found");
-      std::size_t idx = hash_obj_(k) % buckets_.size();
+      }
+      std::size_t idx = hashObj_(k) % buckets_.size();
       for (auto it = buckets_[idx].begin(); it != buckets_[idx].end(); ++it) {
-        if (equal_obj_((*it).first, k)) {
+        if (equalObj_((*it).first, k)) {
           return (*it).second;
         }
       }
@@ -190,25 +195,27 @@ namespace pozdnyakov
 
     void rehash(std::size_t slots)
     {
-      if (slots == 0)
+      if (slots == 0) {
         slots = 1;
-      Vector< List< std::pair< Key, Value > > > new_buckets;
-      new_buckets.resize(slots);
+      }
+      Vector< List< std::pair< Key, Value > > > newBuckets;
+      newBuckets.resize(slots);
 
       for (std::size_t i = 0; i < buckets_.size(); ++i) {
         for (auto it = buckets_[i].begin(); it != buckets_[i].end(); ++it) {
-          std::size_t idx = hash_obj_((*it).first) % slots;
-          new_buckets[idx].pushFront(std::move(*it));
+          std::size_t idx = hashObj_((*it).first) % slots;
+          newBuckets[idx].pushFront(std::move(*it));
         }
       }
 
-      buckets_ = std::move(new_buckets);
+      buckets_ = std::move(newBuckets);
     }
 
     std::size_t size() const
     {
       return size_;
     }
+
     bool empty() const
     {
       return size_ == 0;
@@ -216,8 +223,9 @@ namespace pozdnyakov
 
     iterator begin()
     {
-      if (buckets_.size() == 0)
+      if (buckets_.size() == 0) {
         return end();
+      }
       return iterator(&buckets_, 0, buckets_[0].begin());
     }
 

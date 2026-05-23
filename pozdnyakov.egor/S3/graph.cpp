@@ -15,8 +15,9 @@ namespace pozdnyakov
   bool Graph::hasVertex(const std::string &v) const
   {
     for (std::size_t i = 0; i < vertices_.size(); ++i) {
-      if (vertices_[i] == v)
+      if (vertices_[i] == v) {
         return true;
+      }
     }
     return false;
   }
@@ -57,10 +58,10 @@ namespace pozdnyakov
     Vector< EdgeInfo > result;
     for (auto it = edges_.begin(); it != edges_.end(); ++it) {
       if ((*it).first.first == from) {
-        const std::string &to_ = (*it).first.second;
+        const std::string &toNode = (*it).first.second;
         const Vector< unsigned int > &weights = (*it).second;
         for (std::size_t i = 0; i < weights.size(); ++i) {
-          result.pushBack({from, to_, weights[i]});
+          result.pushBack({from, toNode, weights[i]});
         }
       }
     }
@@ -72,10 +73,10 @@ namespace pozdnyakov
     Vector< EdgeInfo > result;
     for (auto it = edges_.begin(); it != edges_.end(); ++it) {
       if ((*it).first.second == to) {
-        const std::string &from_ = (*it).first.first;
+        const std::string &fromNode = (*it).first.first;
         const Vector< unsigned int > &weights = (*it).second;
         for (std::size_t i = 0; i < weights.size(); ++i) {
-          result.pushBack({from_, to, weights[i]});
+          result.pushBack({fromNode, to, weights[i]});
         }
       }
     }
@@ -86,11 +87,11 @@ namespace pozdnyakov
   {
     Vector< EdgeInfo > result;
     for (auto it = edges_.begin(); it != edges_.end(); ++it) {
-      const std::string &from_ = (*it).first.first;
-      const std::string &to_ = (*it).first.second;
+      const std::string &fromNode = (*it).first.first;
+      const std::string &toNode = (*it).first.second;
       const Vector< unsigned int > &weights = (*it).second;
       for (std::size_t i = 0; i < weights.size(); ++i) {
-        result.pushBack({from_, to_, weights[i]});
+        result.pushBack({fromNode, toNode, weights[i]});
       }
     }
     return result;

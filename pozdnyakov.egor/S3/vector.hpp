@@ -14,18 +14,18 @@ namespace pozdnyakov
     std::size_t size_;
     std::size_t capacity_;
 
-    void reallocate(std::size_t new_capacity)
+    void reallocate(std::size_t newCapacity)
     {
-      if (new_capacity == 0) {
-        new_capacity = 1;
+      if (newCapacity == 0) {
+        newCapacity = 1;
       }
-      T *new_data = new T[new_capacity];
+      T *newData = new T[newCapacity];
       for (std::size_t i = 0; i < size_; ++i) {
-        new_data[i] = std::move(data_[i]);
+        newData[i] = std::move(data_[i]);
       }
       delete[] data_;
-      data_ = new_data;
-      capacity_ = new_capacity;
+      data_ = newData;
+      capacity_ = newCapacity;
     }
 
   public:
@@ -138,39 +138,44 @@ namespace pozdnyakov
       size_ = 0;
     }
 
-    void resize(std::size_t new_size)
+    void resize(std::size_t newSize)
     {
-      if (new_size > capacity_) {
-        reallocate(new_size);
+      if (newSize > capacity_) {
+        reallocate(newSize);
       }
-      if (new_size > size_) {
-        for (std::size_t i = size_; i < new_size; ++i) {
+      if (newSize > size_) {
+        for (std::size_t i = size_; i < newSize; ++i) {
           data_[i] = T();
         }
       }
-      size_ = new_size;
+      size_ = newSize;
     }
 
     iterator begin() noexcept
     {
       return data_;
     }
+
     iterator end() noexcept
     {
       return data_ + size_;
     }
+
     const_iterator begin() const noexcept
     {
       return data_;
     }
+
     const_iterator end() const noexcept
     {
       return data_ + size_;
     }
+
     const_iterator cbegin() const noexcept
     {
       return data_;
     }
+
     const_iterator cend() const noexcept
     {
       return data_ + size_;

@@ -20,7 +20,6 @@ namespace pozdnyakov
   {
   private:
     Vector< std::string > vertices_;
-
     HashTable< std::pair< std::string, std::string >, Vector< unsigned int >, hash::GraphEdgeSHA1 > edges_;
 
   public:
