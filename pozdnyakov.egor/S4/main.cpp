@@ -181,6 +181,21 @@ namespace pozdnyakov
       }
     }
 
+    size_t calculateHeight(const Node *node) const
+    {
+      if (!node) {
+        return 0;
+      }
+      size_t leftHeight = calculateHeight(node->left);
+      size_t rightHeight = calculateHeight(node->right);
+
+      if (leftHeight > rightHeight) {
+        return 1 + leftHeight;
+      } else {
+        return 1 + rightHeight;
+      }
+    }
+
     void replaceNodeInParent(Node *u, Node *v)
     {
       if (!u->parent) {
@@ -315,32 +330,94 @@ namespace pozdnyakov
 
     size_t height() const
     {
-      return 0; // TODO
+      return calculateHeight(root);
     }
 
     size_t height(const_iterator it) const
     {
-      return 0; // TODO
+      return calculateHeight(it.getNode());
     }
 
     const_iterator rotateLeft(const_iterator it)
     {
-      return it; // TODO
+      Node *a = const_cast< Node * >(it.getNode());
+      if (!a || !a->right) {
+        throw std::invalid_argument("Node or right child is null");
+      }
+
+      Node *b = a->right;
+
+      a->right = b->left;
+      if (b->left) {
+        b->left->parent = a;
+      }
+
+      b->parent = a->parent;
+      if (!a->parent) {
+        root = b;
+      } else if (a == a->parent->left) {
+        a->parent->left = b;
+      } else {
+        a->parent->right = b;
+      }
+
+      b->left = a;
+      a->parent = b;
+
+      return const_iterator(b);
     }
 
     const_iterator rotateRight(const_iterator it)
     {
-      return it; // TODO
+      Node *a = const_cast< Node * >(it.getNode());
+      if (!a || !a->left) {
+        throw std::invalid_argument("Node or left child is null");
+      }
+
+      Node *b = a->left;
+
+      a->left = b->right;
+      if (b->right) {
+        b->right->parent = a;
+      }
+
+      b->parent = a->parent;
+      if (!a->parent) {
+        root = b;
+      } else if (a == a->parent->left) {
+        a->parent->left = b;
+      } else {
+        a->parent->right = b;
+      }
+
+      b->right = a;
+      a->parent = b;
+
+      return const_iterator(b);
     }
 
     const_iterator rotateLargeLeft(const_iterator it)
     {
-      return it; // TODO
+      Node *a = const_cast< Node * >(it.getNode());
+      if (!a || !a->right) {
+        throw std::invalid_argument("Right child is null");
+      }
+
+      rotateRight(const_iterator(a->right));
+
+      return rotateLeft(it);
     }
 
     const_iterator rotateLargeRight(const_iterator it)
     {
-      return it; // TODO
+      Node *a = const_cast< Node * >(it.getNode());
+      if (!a || !a->left) {
+        throw std::invalid_argument("Left child is null");
+      }
+
+      rotateLeft(const_iterator(a->left));
+
+      return rotateRight(it);
     }
 
     iterator begin()
@@ -382,6 +459,6 @@ namespace pozdnyakov
 
 int main()
 {
-  std::cout << "S4 init" << std::endl;
+  std::cout << "S4" << "\n";
   return 0;
 }
