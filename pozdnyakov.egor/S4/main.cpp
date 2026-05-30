@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
@@ -64,8 +65,7 @@ namespace pozdnyakov
         while (current->left) {
           current = current->left;
         }
-      }
-      else {
+      } else {
         Node *p = current->parent;
         while (p && current == p->right) {
           current = p;
@@ -181,6 +181,17 @@ namespace pozdnyakov
       }
     }
 
+    Node *copyTree(const Node *node, Node *parent = nullptr)
+    {
+      if (!node) {
+        return nullptr;
+      }
+      Node *newNode = new Node(node->key, node->value, parent);
+      newNode->left = copyTree(node->left, newNode);
+      newNode->right = copyTree(node->right, newNode);
+      return newNode;
+    }
+
     size_t calculateHeight(const Node *node) const
     {
       if (!node) {
@@ -255,6 +266,41 @@ namespace pozdnyakov
     BSTree():
       root(nullptr)
     {}
+
+    BSTree(const BSTree &other):
+      root(nullptr),
+      comp(other.comp)
+    {
+      root = copyTree(other.root);
+    }
+
+    BSTree(BSTree &&other) noexcept:
+      root(other.root),
+      comp(std::move(other.comp))
+    {
+      other.root = nullptr;
+    }
+
+    BSTree &operator=(const BSTree &other)
+    {
+      if (this != &other) {
+        BSTree tmp(other);
+        std::swap(root, tmp.root);
+        std::swap(comp, tmp.comp);
+      }
+      return *this;
+    }
+
+    BSTree &operator=(BSTree &&other) noexcept
+    {
+      if (this != &other) {
+        clear(root);
+        root = other.root;
+        comp = std::move(other.comp);
+        other.root = nullptr;
+      }
+      return *this;
+    }
 
     ~BSTree()
     {
@@ -404,7 +450,6 @@ namespace pozdnyakov
       }
 
       rotateRight(const_iterator(a->right));
-
       return rotateLeft(it);
     }
 
@@ -416,7 +461,6 @@ namespace pozdnyakov
       }
 
       rotateLeft(const_iterator(a->left));
-
       return rotateRight(it);
     }
 
@@ -455,10 +499,98 @@ namespace pozdnyakov
     }
   };
 
+  template < class Key, class Value, class Compare >
+  BSTree< Key, Value, Compare > unite(const BSTree< Key, Value, Compare > &t1, const BSTree< Key, Value, Compare > &t2)
+  {
+    BSTree< Key, Value, Compare > result;
+    auto it1 = t1.begin();
+    auto it2 = t2.begin();
+    Compare comp;
+
+    while (it1 != t1.end() && it2 != t2.end()) {
+      if (comp((*it1).first, (*it2).first)) {
+        result.push((*it1).first, (*it1).second);
+        ++it1;
+      } else if (comp((*it2).first, (*it1).first)) {
+        result.push((*it2).first, (*it2).second);
+        ++it2;
+      } else {
+        result.push((*it1).first, (*it1).second);
+        ++it1;
+        ++it2;
+      }
+    }
+
+    while (it1 != t1.end()) {
+      result.push((*it1).first, (*it1).second);
+      ++it1;
+    }
+
+    while (it2 != t2.end()) {
+      result.push((*it2).first, (*it2).second);
+      ++it2;
+    }
+
+    return result;
+  }
+
+  template < class Key, class Value, class Compare >
+  BSTree< Key, Value, Compare > intersect(const BSTree< Key, Value, Compare > &t1,
+                                          const BSTree< Key, Value, Compare > &t2)
+  {
+    BSTree< Key, Value, Compare > result;
+    auto it1 = t1.begin();
+    auto it2 = t2.begin();
+    Compare comp;
+
+    while (it1 != t1.end() && it2 != t2.end()) {
+      if (comp((*it1).first, (*it2).first)) {
+        ++it1;
+      } else if (comp((*it2).first, (*it1).first)) {
+        ++it2;
+      } else {
+        result.push((*it1).first, (*it1).second);
+        ++it1;
+        ++it2;
+      }
+    }
+
+    return result;
+  }
+
+  template < class Key, class Value, class Compare >
+  BSTree< Key, Value, Compare > complement(const BSTree< Key, Value, Compare > &t1,
+                                           const BSTree< Key, Value, Compare > &t2)
+  {
+    BSTree< Key, Value, Compare > result;
+    auto it1 = t1.begin();
+    auto it2 = t2.begin();
+    Compare comp;
+
+    while (it1 != t1.end() && it2 != t2.end()) {
+      if (comp((*it1).first, (*it2).first)) {
+        result.push((*it1).first, (*it1).second);
+        ++it1;
+      } else if (comp((*it2).first, (*it1).first)) {
+        ++it2;
+      } else {
+        ++it1;
+        ++it2;
+      }
+    }
+
+    while (it1 != t1.end()) {
+      result.push((*it1).first, (*it1).second);
+      ++it1;
+    }
+
+    return result;
+  }
+
 }
 
 int main()
 {
-  std::cout << "S4" << "\n";
+  std::cout << "S4 init" << "\n";
   return 0;
 }
