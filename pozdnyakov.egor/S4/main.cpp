@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
@@ -307,7 +308,7 @@ namespace pozdnyakov
       clear(root);
     }
 
-    void push(Key k, Value v)
+    void push(const Key &k, const Value &v)
     {
       if (!root) {
         root = new Node(k, v);
@@ -337,7 +338,7 @@ namespace pozdnyakov
       }
     }
 
-    Value get(Key k) const
+    Value &get(const Key &k)
     {
       Node *current = root;
       while (current) {
@@ -352,7 +353,22 @@ namespace pozdnyakov
       throw std::out_of_range("Key not found");
     }
 
-    Value drop(Key k)
+    const Value &get(const Key &k) const
+    {
+      Node *current = root;
+      while (current) {
+        if (comp(k, current->key)) {
+          current = current->left;
+        } else if (comp(current->key, k)) {
+          current = current->right;
+        } else {
+          return current->value;
+        }
+      }
+      throw std::out_of_range("Key not found");
+    }
+
+    Value drop(const Key &k)
     {
       Node *current = root;
       while (current) {
@@ -388,7 +404,7 @@ namespace pozdnyakov
     {
       Node *a = const_cast< Node * >(it.getNode());
       if (!a || !a->right) {
-        throw std::invalid_argument("Node or right child is null");
+        throw std::invalid_argument("Cannot perform left rotation");
       }
 
       Node *b = a->right;
@@ -417,7 +433,7 @@ namespace pozdnyakov
     {
       Node *a = const_cast< Node * >(it.getNode());
       if (!a || !a->left) {
-        throw std::invalid_argument("Node or left child is null");
+        throw std::invalid_argument("Cannot perform right rotation");
       }
 
       Node *b = a->left;
@@ -446,7 +462,7 @@ namespace pozdnyakov
     {
       Node *a = const_cast< Node * >(it.getNode());
       if (!a || !a->right) {
-        throw std::invalid_argument("Right child is null");
+        throw std::invalid_argument("Cannot perform large left rotation");
       }
 
       rotateRight(const_iterator(a->right));
@@ -457,7 +473,7 @@ namespace pozdnyakov
     {
       Node *a = const_cast< Node * >(it.getNode());
       if (!a || !a->left) {
-        throw std::invalid_argument("Left child is null");
+        throw std::invalid_argument("Cannot perform large right rotation");
       }
 
       rotateLeft(const_iterator(a->left));
@@ -589,8 +605,115 @@ namespace pozdnyakov
 
 }
 
-int main()
+std::string extractWord(const std::string &line, size_t &pos)
 {
-  std::cout << "S4 init" << "\n";
-  return 0;
+  while (pos < line.length() && (line[pos] == ' ' || line[pos] == '\t' || line[pos] == '\r')) {
+    pos++;
+  }
+  if (pos >= line.length()) {
+    return "";
+  }
+  size_t start = pos;
+  while (pos < line.length() && line[pos] != ' ' && line[pos] != '\t' && line[pos] != '\r') {
+    pos++;
+  }
+  return line.substr(start, pos - start);
 }
+
+int main(int argc, char *argv[])
+{
+  if (argc < 2) {
+    std::cerr << "Usage: " << argv[0] << " filename\n";
+    return 1;
+  }
+
+  std::ifstream file(argv[1]);
+  if (!file.is_open()) {
+    std::cerr << "Failed to open file.\n";
+    return 1;
+  }
+
+  using InnerTree = pozdnyakov::BSTree< int, std::string >;
+  using OuterTree = pozdnyakov::BSTree< std::string, InnerTree >;
+  OuterTree globalDicts;
+
+  std::string line;
+  while (std::getline(file, line)) {
+    size_t pos = 0;
+    std::string dictName = extractWord(line, pos);
+    std::string keyStr = extractWord(line, pos);
+    std::string valueStr = extractWord(line, pos);
+
+    if (!dictName.empty() && !keyStr.empty() && !valueStr.empty()) {
+      int key = std::stoi(keyStr);
+      try {
+        globalDicts.get(dictName).push(key, valueStr);
+      } catch (const std::out_of_range &) {
+        InnerTree newDict;
+        newDict.push(key, valueStr);
+        globalDicts.push(dictName, std::move(newDict));
+      }
+    }
+  }
+
+  while (std::getline(std::cin, line)) {
+    size_t pos = 0;
+    std::string cmd = extractWord(line, pos);
+
+    if (cmd.empty()) {
+      continue;
+    }
+
+    if (cmd == "print") {
+      std::string dictName = extractWord(line, pos);
+      try {
+        InnerTree &dict = globalDicts.get(dictName);
+        bool isEmpty = true;
+        for (auto it = dict.begin(); it != dict.end(); ++it) {
+          std::cout << (*it).first << " " << (*it).second << " ";
+          isEmpty = false;
+        }
+        if (isEmpty) {
+          std::cout << "EMPTY";
+        }
+        std::cout << "\n";
+      } catch (const std::out_of_range &) {
+        std::cout << "EMPTY\n";
+      }
+    } else if (cmd == "union") {
+      std::string d1 = extractWord(line, pos);
+      std::string d2 = extractWord(line, pos);
+      std::string res = extractWord(line, pos);
+      try {
+        InnerTree united = pozdnyakov::unite(globalDicts.get(d1), globalDicts.get(d2));
+        globalDicts.push(res, std::move(united));
+      } catch (const std::out_of_range &) {
+        std::cout << "INVALID COMMAND\n";
+      }
+    } else if (cmd == "intersect") {
+      std::string d1 = extractWord(line, pos);
+      std::string d2 = extractWord(line, pos);
+      std::string res = extractWord(line, pos);
+      try {
+        InnerTree intersected = pozdnyakov::intersect(globalDicts.get(d1), globalDicts.get(d2));
+        globalDicts.push(res, std::move(intersected));
+      } catch (const std::out_of_range &) {
+        std::cout << "INVALID COMMAND\n";
+      }
+    } else if (cmd == "complement") {
+      std::string d1 = extractWord(line, pos);
+      std::string d2 = extractWord(line, pos);
+      std::string res = extractWord(line, pos);
+      try {
+        InnerTree complemented = pozdnyakov::complement(globalDicts.get(d1), globalDicts.get(d2));
+        globalDicts.push(res, std::move(complemented));
+      } catch (const std::out_of_range &) {
+        std::cout << "INVALID COMMAND\n";
+      }
+    } else {
+      std::cout << "INVALID COMMAND\n";
+    }
+  }
+
+  return 0;
+} 
