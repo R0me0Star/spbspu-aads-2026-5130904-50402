@@ -20,10 +20,10 @@ namespace pozdnyakov
       TreeNode *left;
       TreeNode *right;
 
-      TreeNode(const Key &k, const Value &v, TreeNode *p = nullptr):
-        key(k),
-        value(v),
-        parent(p),
+      TreeNode(const Key &initKey, const Value &initValue, TreeNode *parentNode = nullptr):
+        key(initKey),
+        value(initValue),
+        parent(parentNode),
         left(nullptr),
         right(nullptr)
       {}
@@ -67,21 +67,21 @@ namespace pozdnyakov
           current = current->left;
         }
       } else {
-        Node *p = current->parent;
-        while (p && current == p->right) {
-          current = p;
-          p = p->parent;
+        Node *parentNode = current->parent;
+        while (parentNode && current == parentNode->right) {
+          current = parentNode;
+          parentNode = parentNode->parent;
         }
-        current = p;
+        current = parentNode;
       }
       return *this;
     }
 
     BSTIterator operator++(int)
     {
-      BSTIterator tmp = *this;
+      BSTIterator temp = *this;
       ++(*this);
-      return tmp;
+      return temp;
     }
 
     bool operator==(const BSTIterator &other) const
@@ -133,21 +133,21 @@ namespace pozdnyakov
           current = current->left;
         }
       } else {
-        const Node *p = current->parent;
-        while (p && current == p->right) {
-          current = p;
-          p = p->parent;
+        const Node *parentNode = current->parent;
+        while (parentNode && current == parentNode->right) {
+          current = parentNode;
+          parentNode = parentNode->parent;
         }
-        current = p;
+        current = parentNode;
       }
       return *this;
     }
 
     BSTConstIterator operator++(int)
     {
-      BSTConstIterator tmp = *this;
+      BSTConstIterator temp = *this;
       ++(*this);
-      return tmp;
+      return temp;
     }
 
     bool operator==(const BSTConstIterator &other) const
@@ -171,7 +171,7 @@ namespace pozdnyakov
   private:
     using Node = detail::TreeNode< Key, Value >;
     Node *root;
-    Compare comp;
+    Compare comparator;
 
     void clear(Node *node)
     {
@@ -182,12 +182,12 @@ namespace pozdnyakov
       }
     }
 
-    Node *copyTree(const Node *node, Node *parent = nullptr)
+    Node *copyTree(const Node *node, Node *parentNode = nullptr)
     {
       if (!node) {
         return nullptr;
       }
-      Node *newNode = new Node(node->key, node->value, parent);
+      Node *newNode = new Node(node->key, node->value, parentNode);
       newNode->left = copyTree(node->left, newNode);
       newNode->right = copyTree(node->right, newNode);
       return newNode;
@@ -198,8 +198,8 @@ namespace pozdnyakov
       if (!node) {
         return 0;
       }
-      size_t leftHeight = calculateHeight(node->left);
-      size_t rightHeight = calculateHeight(node->right);
+      const size_t leftHeight = calculateHeight(node->left);
+      const size_t rightHeight = calculateHeight(node->right);
 
       if (leftHeight > rightHeight) {
         return 1 + leftHeight;
@@ -208,18 +208,18 @@ namespace pozdnyakov
       }
     }
 
-    void replaceNodeInParent(Node *u, Node *v)
+    void replaceNodeInParent(Node *oldNode, Node *newNode)
     {
-      if (!u->parent) {
-        root = v;
-      } else if (u == u->parent->left) {
-        u->parent->left = v;
+      if (!oldNode->parent) {
+        root = newNode;
+      } else if (oldNode == oldNode->parent->left) {
+        oldNode->parent->left = newNode;
       } else {
-        u->parent->right = v;
+        oldNode->parent->right = newNode;
       }
 
-      if (v) {
-        v->parent = u->parent;
+      if (newNode) {
+        newNode->parent = oldNode->parent;
       }
     }
 
@@ -270,14 +270,14 @@ namespace pozdnyakov
 
     BSTree(const BSTree &other):
       root(nullptr),
-      comp(other.comp)
+      comparator(other.comparator)
     {
       root = copyTree(other.root);
     }
 
     BSTree(BSTree &&other) noexcept:
       root(other.root),
-      comp(std::move(other.comp))
+      comparator(std::move(other.comparator))
     {
       other.root = nullptr;
     }
@@ -285,9 +285,9 @@ namespace pozdnyakov
     BSTree &operator=(const BSTree &other)
     {
       if (this != &other) {
-        BSTree tmp(other);
-        std::swap(root, tmp.root);
-        std::swap(comp, tmp.comp);
+        BSTree temp(other);
+        std::swap(root, temp.root);
+        std::swap(comparator, temp.comparator);
       }
       return *this;
     }
@@ -297,7 +297,7 @@ namespace pozdnyakov
       if (this != &other) {
         clear(root);
         root = other.root;
-        comp = std::move(other.comp);
+        comparator = std::move(other.comparator);
         other.root = nullptr;
       }
       return *this;
@@ -308,43 +308,43 @@ namespace pozdnyakov
       clear(root);
     }
 
-    void push(const Key &k, const Value &v)
+    void push(const Key &targetKey, const Value &targetValue)
     {
       if (!root) {
-        root = new Node(k, v);
+        root = new Node(targetKey, targetValue);
         return;
       }
 
       Node *current = root;
-      Node *parent = nullptr;
+      Node *parentNode = nullptr;
 
       while (current) {
-        parent = current;
-        if (comp(k, current->key)) {
+        parentNode = current;
+        if (comparator(targetKey, current->key)) {
           current = current->left;
-        } else if (comp(current->key, k)) {
+        } else if (comparator(current->key, targetKey)) {
           current = current->right;
         } else {
-          current->value = v;
+          current->value = targetValue;
           return;
         }
       }
 
-      Node *newNode = new Node(k, v, parent);
-      if (comp(k, parent->key)) {
-        parent->left = newNode;
+      Node *newNode = new Node(targetKey, targetValue, parentNode);
+      if (comparator(targetKey, parentNode->key)) {
+        parentNode->left = newNode;
       } else {
-        parent->right = newNode;
+        parentNode->right = newNode;
       }
     }
 
-    Value &get(const Key &k)
+    Value &get(const Key &targetKey)
     {
       Node *current = root;
       while (current) {
-        if (comp(k, current->key)) {
+        if (comparator(targetKey, current->key)) {
           current = current->left;
-        } else if (comp(current->key, k)) {
+        } else if (comparator(current->key, targetKey)) {
           current = current->right;
         } else {
           return current->value;
@@ -353,13 +353,13 @@ namespace pozdnyakov
       throw std::out_of_range("Key not found");
     }
 
-    const Value &get(const Key &k) const
+    const Value &get(const Key &targetKey) const
     {
       Node *current = root;
       while (current) {
-        if (comp(k, current->key)) {
+        if (comparator(targetKey, current->key)) {
           current = current->left;
-        } else if (comp(current->key, k)) {
+        } else if (comparator(current->key, targetKey)) {
           current = current->right;
         } else {
           return current->value;
@@ -368,13 +368,13 @@ namespace pozdnyakov
       throw std::out_of_range("Key not found");
     }
 
-    Value drop(const Key &k)
+    Value drop(const Key &targetKey)
     {
       Node *current = root;
       while (current) {
-        if (comp(k, current->key)) {
+        if (comparator(targetKey, current->key)) {
           current = current->left;
-        } else if (comp(current->key, k)) {
+        } else if (comparator(current->key, targetKey)) {
           current = current->right;
         } else {
           break;
@@ -385,9 +385,9 @@ namespace pozdnyakov
         throw std::out_of_range("Key not found");
       }
 
-      Value retVal = current->value;
+      const Value removedValue = current->value;
       removeNode(current);
-      return retVal;
+      return removedValue;
     }
 
     size_t height() const
@@ -395,101 +395,101 @@ namespace pozdnyakov
       return calculateHeight(root);
     }
 
-    size_t height(const_iterator it) const
+    size_t height(const_iterator iterator) const
     {
-      return calculateHeight(it.getNode());
+      return calculateHeight(iterator.getNode());
     }
 
-    const_iterator rotateLeft(const_iterator it)
+    const_iterator rotateLeft(const_iterator iterator)
     {
-      Node *a = const_cast< Node * >(it.getNode());
-      if (!a || !a->right) {
+      Node *const nodeA = const_cast< Node * >(iterator.getNode());
+      if (!nodeA || !nodeA->right) {
         throw std::invalid_argument("Cannot perform left rotation");
       }
 
-      Node *b = a->right;
+      Node *const nodeB = nodeA->right;
 
-      a->right = b->left;
-      if (b->left) {
-        b->left->parent = a;
+      nodeA->right = nodeB->left;
+      if (nodeB->left) {
+        nodeB->left->parent = nodeA;
       }
 
-      b->parent = a->parent;
-      if (!a->parent) {
-        root = b;
-      } else if (a == a->parent->left) {
-        a->parent->left = b;
+      nodeB->parent = nodeA->parent;
+      if (!nodeA->parent) {
+        root = nodeB;
+      } else if (nodeA == nodeA->parent->left) {
+        nodeA->parent->left = nodeB;
       } else {
-        a->parent->right = b;
+        nodeA->parent->right = nodeB;
       }
 
-      b->left = a;
-      a->parent = b;
+      nodeB->left = nodeA;
+      nodeA->parent = nodeB;
 
-      return const_iterator(b);
+      return const_iterator(nodeB);
     }
 
-    const_iterator rotateRight(const_iterator it)
+    const_iterator rotateRight(const_iterator iterator)
     {
-      Node *a = const_cast< Node * >(it.getNode());
-      if (!a || !a->left) {
+      Node *const nodeA = const_cast< Node * >(iterator.getNode());
+      if (!nodeA || !nodeA->left) {
         throw std::invalid_argument("Cannot perform right rotation");
       }
 
-      Node *b = a->left;
+      Node *const nodeB = nodeA->left;
 
-      a->left = b->right;
-      if (b->right) {
-        b->right->parent = a;
+      nodeA->left = nodeB->right;
+      if (nodeB->right) {
+        nodeB->right->parent = nodeA;
       }
 
-      b->parent = a->parent;
-      if (!a->parent) {
-        root = b;
-      } else if (a == a->parent->left) {
-        a->parent->left = b;
+      nodeB->parent = nodeA->parent;
+      if (!nodeA->parent) {
+        root = nodeB;
+      } else if (nodeA == nodeA->parent->left) {
+        nodeA->parent->left = nodeB;
       } else {
-        a->parent->right = b;
+        nodeA->parent->right = nodeB;
       }
 
-      b->right = a;
-      a->parent = b;
+      nodeB->right = nodeA;
+      nodeA->parent = nodeB;
 
-      return const_iterator(b);
+      return const_iterator(nodeB);
     }
 
-    const_iterator rotateLargeLeft(const_iterator it)
+    const_iterator rotateLargeLeft(const_iterator iterator)
     {
-      Node *a = const_cast< Node * >(it.getNode());
-      if (!a || !a->right) {
+      Node *const nodeA = const_cast< Node * >(iterator.getNode());
+      if (!nodeA || !nodeA->right) {
         throw std::invalid_argument("Cannot perform large left rotation");
       }
 
-      rotateRight(const_iterator(a->right));
-      return rotateLeft(it);
+      rotateRight(const_iterator(nodeA->right));
+      return rotateLeft(iterator);
     }
 
-    const_iterator rotateLargeRight(const_iterator it)
+    const_iterator rotateLargeRight(const_iterator iterator)
     {
-      Node *a = const_cast< Node * >(it.getNode());
-      if (!a || !a->left) {
+      Node *const nodeA = const_cast< Node * >(iterator.getNode());
+      if (!nodeA || !nodeA->left) {
         throw std::invalid_argument("Cannot perform large right rotation");
       }
 
-      rotateLeft(const_iterator(a->left));
-      return rotateRight(it);
+      rotateLeft(const_iterator(nodeA->left));
+      return rotateRight(iterator);
     }
 
     iterator begin()
     {
-      Node *curr = root;
-      if (!curr) {
+      Node *current = root;
+      if (!current) {
         return iterator(nullptr);
       }
-      while (curr->left) {
-        curr = curr->left;
+      while (current->left) {
+        current = current->left;
       }
-      return iterator(curr);
+      return iterator(current);
     }
 
     iterator end()
@@ -499,14 +499,14 @@ namespace pozdnyakov
 
     const_iterator begin() const
     {
-      const Node *curr = root;
-      if (!curr) {
+      const Node *current = root;
+      if (!current) {
         return const_iterator(nullptr);
       }
-      while (curr->left) {
-        curr = curr->left;
+      while (current->left) {
+        current = current->left;
       }
-      return const_iterator(curr);
+      return const_iterator(current);
     }
 
     const_iterator end() const
@@ -516,58 +516,59 @@ namespace pozdnyakov
   };
 
   template < class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > unite(const BSTree< Key, Value, Compare > &t1, const BSTree< Key, Value, Compare > &t2)
+  BSTree< Key, Value, Compare > unite(const BSTree< Key, Value, Compare > &tree1,
+                                      const BSTree< Key, Value, Compare > &tree2)
   {
     BSTree< Key, Value, Compare > result;
-    auto it1 = t1.begin();
-    auto it2 = t2.begin();
-    Compare comp;
+    auto iterator1 = tree1.begin();
+    auto iterator2 = tree2.begin();
+    const Compare comparator{};
 
-    while (it1 != t1.end() && it2 != t2.end()) {
-      if (comp((*it1).first, (*it2).first)) {
-        result.push((*it1).first, (*it1).second);
-        ++it1;
-      } else if (comp((*it2).first, (*it1).first)) {
-        result.push((*it2).first, (*it2).second);
-        ++it2;
+    while (iterator1 != tree1.end() && iterator2 != tree2.end()) {
+      if (comparator((*iterator1).first, (*iterator2).first)) {
+        result.push((*iterator1).first, (*iterator1).second);
+        ++iterator1;
+      } else if (comparator((*iterator2).first, (*iterator1).first)) {
+        result.push((*iterator2).first, (*iterator2).second);
+        ++iterator2;
       } else {
-        result.push((*it1).first, (*it1).second);
-        ++it1;
-        ++it2;
+        result.push((*iterator1).first, (*iterator1).second);
+        ++iterator1;
+        ++iterator2;
       }
     }
 
-    while (it1 != t1.end()) {
-      result.push((*it1).first, (*it1).second);
-      ++it1;
+    while (iterator1 != tree1.end()) {
+      result.push((*iterator1).first, (*iterator1).second);
+      ++iterator1;
     }
 
-    while (it2 != t2.end()) {
-      result.push((*it2).first, (*it2).second);
-      ++it2;
+    while (iterator2 != tree2.end()) {
+      result.push((*iterator2).first, (*iterator2).second);
+      ++iterator2;
     }
 
     return result;
   }
 
   template < class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > intersect(const BSTree< Key, Value, Compare > &t1,
-                                          const BSTree< Key, Value, Compare > &t2)
+  BSTree< Key, Value, Compare > intersect(const BSTree< Key, Value, Compare > &tree1,
+                                          const BSTree< Key, Value, Compare > &tree2)
   {
     BSTree< Key, Value, Compare > result;
-    auto it1 = t1.begin();
-    auto it2 = t2.begin();
-    Compare comp;
+    auto iterator1 = tree1.begin();
+    auto iterator2 = tree2.begin();
+    const Compare comparator{};
 
-    while (it1 != t1.end() && it2 != t2.end()) {
-      if (comp((*it1).first, (*it2).first)) {
-        ++it1;
-      } else if (comp((*it2).first, (*it1).first)) {
-        ++it2;
+    while (iterator1 != tree1.end() && iterator2 != tree2.end()) {
+      if (comparator((*iterator1).first, (*iterator2).first)) {
+        ++iterator1;
+      } else if (comparator((*iterator2).first, (*iterator1).first)) {
+        ++iterator2;
       } else {
-        result.push((*it1).first, (*it1).second);
-        ++it1;
-        ++it2;
+        result.push((*iterator1).first, (*iterator1).second);
+        ++iterator1;
+        ++iterator2;
       }
     }
 
@@ -575,29 +576,29 @@ namespace pozdnyakov
   }
 
   template < class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > complement(const BSTree< Key, Value, Compare > &t1,
-                                           const BSTree< Key, Value, Compare > &t2)
+  BSTree< Key, Value, Compare > complement(const BSTree< Key, Value, Compare > &tree1,
+                                           const BSTree< Key, Value, Compare > &tree2)
   {
     BSTree< Key, Value, Compare > result;
-    auto it1 = t1.begin();
-    auto it2 = t2.begin();
-    Compare comp;
+    auto iterator1 = tree1.begin();
+    auto iterator2 = tree2.begin();
+    const Compare comparator{};
 
-    while (it1 != t1.end() && it2 != t2.end()) {
-      if (comp((*it1).first, (*it2).first)) {
-        result.push((*it1).first, (*it1).second);
-        ++it1;
-      } else if (comp((*it2).first, (*it1).first)) {
-        ++it2;
+    while (iterator1 != tree1.end() && iterator2 != tree2.end()) {
+      if (comparator((*iterator1).first, (*iterator2).first)) {
+        result.push((*iterator1).first, (*iterator1).second);
+        ++iterator1;
+      } else if (comparator((*iterator2).first, (*iterator1).first)) {
+        ++iterator2;
       } else {
-        ++it1;
-        ++it2;
+        ++iterator1;
+        ++iterator2;
       }
     }
 
-    while (it1 != t1.end()) {
-      result.push((*it1).first, (*it1).second);
-      ++it1;
+    while (iterator1 != tree1.end()) {
+      result.push((*iterator1).first, (*iterator1).second);
+      ++iterator1;
     }
 
     return result;
@@ -605,19 +606,19 @@ namespace pozdnyakov
 
 }
 
-std::string extractWord(const std::string &line, size_t &pos)
+std::string extractWord(const std::string &line, size_t &position)
 {
-  while (pos < line.length() && (line[pos] == ' ' || line[pos] == '\t' || line[pos] == '\r')) {
-    pos++;
+  while (position < line.length() && (line[position] == ' ' || line[position] == '\t' || line[position] == '\r')) {
+    position++;
   }
-  if (pos >= line.length()) {
+  if (position >= line.length()) {
     return "";
   }
-  size_t start = pos;
-  while (pos < line.length() && line[pos] != ' ' && line[pos] != '\t' && line[pos] != '\r') {
-    pos++;
+  const size_t start = position;
+  while (position < line.length() && line[position] != ' ' && line[position] != '\t' && line[position] != '\r') {
+    position++;
   }
-  return line.substr(start, pos - start);
+  return line.substr(start, position - start);
 }
 
 int main(int argc, char *argv[])
@@ -639,38 +640,38 @@ int main(int argc, char *argv[])
 
   std::string line;
   while (std::getline(file, line)) {
-    size_t pos = 0;
-    std::string dictName = extractWord(line, pos);
-    std::string keyStr = extractWord(line, pos);
-    std::string valueStr = extractWord(line, pos);
+    size_t position = 0;
+    const std::string dictName = extractWord(line, position);
+    const std::string keyString = extractWord(line, position);
+    const std::string valueString = extractWord(line, position);
 
-    if (!dictName.empty() && !keyStr.empty() && !valueStr.empty()) {
-      int key = std::stoi(keyStr);
+    if (!dictName.empty() && !keyString.empty() && !valueString.empty()) {
+      const int key = std::stoi(keyString);
       try {
-        globalDicts.get(dictName).push(key, valueStr);
+        globalDicts.get(dictName).push(key, valueString);
       } catch (const std::out_of_range &) {
         InnerTree newDict;
-        newDict.push(key, valueStr);
+        newDict.push(key, valueString);
         globalDicts.push(dictName, std::move(newDict));
       }
     }
   }
 
   while (std::getline(std::cin, line)) {
-    size_t pos = 0;
-    std::string cmd = extractWord(line, pos);
+    size_t position = 0;
+    const std::string command = extractWord(line, position);
 
-    if (cmd.empty()) {
+    if (command.empty()) {
       continue;
     }
 
-    if (cmd == "print") {
-      std::string dictName = extractWord(line, pos);
+    if (command == "print") {
+      const std::string dictName = extractWord(line, position);
       try {
         InnerTree &dict = globalDicts.get(dictName);
         bool isEmpty = true;
-        for (auto it = dict.begin(); it != dict.end(); ++it) {
-          std::cout << (*it).first << " " << (*it).second << " ";
+        for (auto iterator = dict.begin(); iterator != dict.end(); ++iterator) {
+          std::cout << (*iterator).first << " " << (*iterator).second << " ";
           isEmpty = false;
         }
         if (isEmpty) {
@@ -680,33 +681,33 @@ int main(int argc, char *argv[])
       } catch (const std::out_of_range &) {
         std::cout << "EMPTY\n";
       }
-    } else if (cmd == "union") {
-      std::string d1 = extractWord(line, pos);
-      std::string d2 = extractWord(line, pos);
-      std::string res = extractWord(line, pos);
+    } else if (command == "union") {
+      const std::string dict1 = extractWord(line, position);
+      const std::string dict2 = extractWord(line, position);
+      const std::string resultName = extractWord(line, position);
       try {
-        InnerTree united = pozdnyakov::unite(globalDicts.get(d1), globalDicts.get(d2));
-        globalDicts.push(res, std::move(united));
+        InnerTree united = pozdnyakov::unite(globalDicts.get(dict1), globalDicts.get(dict2));
+        globalDicts.push(resultName, std::move(united));
       } catch (const std::out_of_range &) {
         std::cout << "INVALID COMMAND\n";
       }
-    } else if (cmd == "intersect") {
-      std::string d1 = extractWord(line, pos);
-      std::string d2 = extractWord(line, pos);
-      std::string res = extractWord(line, pos);
+    } else if (command == "intersect") {
+      const std::string dict1 = extractWord(line, position);
+      const std::string dict2 = extractWord(line, position);
+      const std::string resultName = extractWord(line, position);
       try {
-        InnerTree intersected = pozdnyakov::intersect(globalDicts.get(d1), globalDicts.get(d2));
-        globalDicts.push(res, std::move(intersected));
+        InnerTree intersected = pozdnyakov::intersect(globalDicts.get(dict1), globalDicts.get(dict2));
+        globalDicts.push(resultName, std::move(intersected));
       } catch (const std::out_of_range &) {
         std::cout << "INVALID COMMAND\n";
       }
-    } else if (cmd == "complement") {
-      std::string d1 = extractWord(line, pos);
-      std::string d2 = extractWord(line, pos);
-      std::string res = extractWord(line, pos);
+    } else if (command == "complement") {
+      const std::string dict1 = extractWord(line, position);
+      const std::string dict2 = extractWord(line, position);
+      const std::string resultName = extractWord(line, position);
       try {
-        InnerTree complemented = pozdnyakov::complement(globalDicts.get(d1), globalDicts.get(d2));
-        globalDicts.push(res, std::move(complemented));
+        InnerTree complemented = pozdnyakov::complement(globalDicts.get(dict1), globalDicts.get(dict2));
+        globalDicts.push(resultName, std::move(complemented));
       } catch (const std::out_of_range &) {
         std::cout << "INVALID COMMAND\n";
       }
@@ -716,4 +717,4 @@ int main(int argc, char *argv[])
   }
 
   return 0;
-} 
+}
