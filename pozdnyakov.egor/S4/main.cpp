@@ -516,42 +516,6 @@ namespace pozdnyakov
   };
 
   template < class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > unite(const BSTree< Key, Value, Compare > &tree1,
-                                      const BSTree< Key, Value, Compare > &tree2)
-  {
-    BSTree< Key, Value, Compare > result;
-    auto iterator1 = tree1.begin();
-    auto iterator2 = tree2.begin();
-    const Compare comparator{};
-
-    while (iterator1 != tree1.end() && iterator2 != tree2.end()) {
-      if (comparator((*iterator1).first, (*iterator2).first)) {
-        result.push((*iterator1).first, (*iterator1).second);
-        ++iterator1;
-      } else if (comparator((*iterator2).first, (*iterator1).first)) {
-        result.push((*iterator2).first, (*iterator2).second);
-        ++iterator2;
-      } else {
-        result.push((*iterator1).first, (*iterator1).second);
-        ++iterator1;
-        ++iterator2;
-      }
-    }
-
-    while (iterator1 != tree1.end()) {
-      result.push((*iterator1).first, (*iterator1).second);
-      ++iterator1;
-    }
-
-    while (iterator2 != tree2.end()) {
-      result.push((*iterator2).first, (*iterator2).second);
-      ++iterator2;
-    }
-
-    return result;
-  }
-
-  template < class Key, class Value, class Compare >
   BSTree< Key, Value, Compare > intersect(const BSTree< Key, Value, Compare > &tree1,
                                           const BSTree< Key, Value, Compare > &tree2)
   {
@@ -576,8 +540,8 @@ namespace pozdnyakov
   }
 
   template < class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > complement(const BSTree< Key, Value, Compare > &tree1,
-                                           const BSTree< Key, Value, Compare > &tree2)
+  BSTree< Key, Value, Compare > symmetricDifference(const BSTree< Key, Value, Compare > &tree1,
+                                                    const BSTree< Key, Value, Compare > &tree2)
   {
     BSTree< Key, Value, Compare > result;
     auto iterator1 = tree1.begin();
@@ -589,6 +553,7 @@ namespace pozdnyakov
         result.push((*iterator1).first, (*iterator1).second);
         ++iterator1;
       } else if (comparator((*iterator2).first, (*iterator1).first)) {
+        result.push((*iterator2).first, (*iterator2).second);
         ++iterator2;
       } else {
         ++iterator1;
@@ -599,6 +564,11 @@ namespace pozdnyakov
     while (iterator1 != tree1.end()) {
       result.push((*iterator1).first, (*iterator1).second);
       ++iterator1;
+    }
+
+    while (iterator2 != tree2.end()) {
+      result.push((*iterator2).first, (*iterator2).second);
+      ++iterator2;
     }
 
     return result;
@@ -681,16 +651,6 @@ int main(int argc, char *argv[])
       } catch (const std::out_of_range &) {
         std::cout << "EMPTY\n";
       }
-    } else if (command == "union") {
-      const std::string dict1 = extractWord(line, position);
-      const std::string dict2 = extractWord(line, position);
-      const std::string resultName = extractWord(line, position);
-      try {
-        InnerTree united = pozdnyakov::unite(globalDicts.get(dict1), globalDicts.get(dict2));
-        globalDicts.push(resultName, std::move(united));
-      } catch (const std::out_of_range &) {
-        std::cout << "INVALID COMMAND\n";
-      }
     } else if (command == "intersect") {
       const std::string dict1 = extractWord(line, position);
       const std::string dict2 = extractWord(line, position);
@@ -701,18 +661,18 @@ int main(int argc, char *argv[])
       } catch (const std::out_of_range &) {
         std::cout << "INVALID COMMAND\n";
       }
-    } else if (command == "complement") {
+    } else if (command == "symmetric_difference") {
       const std::string dict1 = extractWord(line, position);
       const std::string dict2 = extractWord(line, position);
       const std::string resultName = extractWord(line, position);
       try {
-        InnerTree complemented = pozdnyakov::complement(globalDicts.get(dict1), globalDicts.get(dict2));
-        globalDicts.push(resultName, std::move(complemented));
+        InnerTree symDiff = pozdnyakov::symmetricDifference(globalDicts.get(dict1), globalDicts.get(dict2));
+        globalDicts.push(resultName, std::move(symDiff));
       } catch (const std::out_of_range &) {
         std::cout << "INVALID COMMAND\n";
       }
     } else {
-      std::cout << "INVALID COMMAND\n";
+      std::cout << "INVALID COMMAND>\n";
     }
   }
 
