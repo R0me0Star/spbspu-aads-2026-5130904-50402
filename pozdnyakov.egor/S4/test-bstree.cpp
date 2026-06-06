@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(test_height_iterator)
   tree.push(1, "one");
   tree.push(3, "three");
 
-  auto it = tree.cbegin();
+  auto it = tree.begin();
   ++it;
   BOOST_CHECK_EQUAL(tree.height(it), 2);
 }
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(test_rotate_left)
 
   BOOST_CHECK_EQUAL(tree.height(), 3);
 
-  auto it = tree.cbegin();
+  auto it = tree.begin();
   ++it;
   ++it;
   tree.rotateLeft(it);
@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(test_rotate_right)
 
   BOOST_CHECK_EQUAL(tree.height(), 3);
 
-  auto it = tree.cbegin();
+  auto it = tree.begin();
   ++it;
   ++it;
   tree.rotateRight(it);
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(test_rotate_large_left)
 
   BOOST_CHECK_EQUAL(tree.height(), 3);
 
-  auto it = tree.cbegin();
+  auto it = tree.begin();
   ++it;
   ++it;
   tree.rotateLargeLeft(it);
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(test_rotate_large_right)
 
   BOOST_CHECK_EQUAL(tree.height(), 3);
 
-  auto it = tree.cbegin();
+  auto it = tree.begin();
   tree.rotateLargeRight(it);
 
   BOOST_CHECK_EQUAL(tree.height(), 2);

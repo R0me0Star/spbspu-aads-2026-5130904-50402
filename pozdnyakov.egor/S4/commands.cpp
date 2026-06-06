@@ -9,9 +9,15 @@ namespace pozdnyakov
     if (str.empty()) {
       return false;
     }
-    size_t pos = 0;
-    std::stoi(str, &pos);
-    return pos == str.length();
+    try {
+      std::size_t pos = 0;
+      std::stoi(str, &pos);
+      return pos == str.length();
+    } catch (const std::invalid_argument &) {
+      return false;
+    } catch (const std::out_of_range &) {
+      return false;
+    }
   }
 
   void cmdPrint(std::istream &, std::ostream &out, Datasets &datasets)
