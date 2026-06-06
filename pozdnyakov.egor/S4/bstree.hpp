@@ -156,12 +156,14 @@ namespace pozdnyakov
       if (rightChild) {
         rightChild->parent = node->parent;
       }
+      delete node;
     } else if (!node->right || node->right == fakeLeaf) {
       Node *leftChild = (node->left == fakeLeaf) ? nullptr : node->left;
       replaceNodeInParent(node, leftChild);
       if (leftChild) {
         leftChild->parent = node->parent;
       }
+      delete node;
     } else {
       Node *successor = node->right;
       while (successor->left && successor->left != fakeLeaf) {
@@ -178,7 +180,6 @@ namespace pozdnyakov
       }
       delete successor;
     }
-    delete node;
   }
 
   template < class Key, class Value, class Compare >
@@ -495,12 +496,15 @@ namespace pozdnyakov
     const Compare comparator{};
 
     while (iterator1 != tree1.end() && iterator2 != tree2.end()) {
-      if (comparator((*iterator1).first, (*iterator2).first)) {
+      const Key &key1 = (*iterator1).first;
+      const Key &key2 = (*iterator2).first;
+
+      if (comparator(key1, key2)) {
         ++iterator1;
-      } else if (comparator((*iterator2).first, (*iterator1).first)) {
+      } else if (comparator(key2, key1)) {
         ++iterator2;
       } else {
-        result.push((*iterator1).first, (*iterator1).second);
+        result.push(key1, (*iterator1).second);
         ++iterator1;
         ++iterator2;
       }
@@ -541,25 +545,29 @@ namespace pozdnyakov
   BSTree< Key, Value, Compare > union_(const BSTree< Key, Value, Compare > &tree1,
                                        const BSTree< Key, Value, Compare > &tree2)
   {
-    BSTree< Key, Value, Compare > result = tree1;
-    auto iterator2 = tree2.begin();
+    BSTree< Key, Value, Compare > result;
     const Compare comparator{};
 
-    while (iterator2 != tree2.end()) {
-      const Key &key = (*iterator2).first;
+    for (auto it = tree1.begin(); it != tree1.end(); ++it) {
+      result.push((*it).first, (*it).second);
+    }
+
+    for (auto it = tree2.begin(); it != tree2.end(); ++it) {
+      const Key &key = (*it).first;
       bool found = false;
-      auto it = result.begin();
-      while (it != result.end()) {
-        if (!comparator((*it).first, key) && !comparator(key, (*it).first)) {
+
+      auto resultIt = result.begin();
+      while (resultIt != result.end()) {
+        if (!comparator((*resultIt).first, key) && !comparator(key, (*resultIt).first)) {
           found = true;
           break;
         }
-        ++it;
+        ++resultIt;
       }
+
       if (!found) {
-        result.push(key, (*iterator2).second);
+        result.push(key, (*it).second);
       }
-      ++iterator2;
     }
 
     return result;

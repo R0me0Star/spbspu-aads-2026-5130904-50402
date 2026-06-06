@@ -1,5 +1,5 @@
-#include <boost/test/unit_test.hpp>
 #include <stdexcept>
+#include <boost/test/unit_test.hpp>
 #include "bstree.hpp"
 
 namespace pozdnyakov

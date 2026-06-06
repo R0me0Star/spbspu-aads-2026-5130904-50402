@@ -6,7 +6,7 @@ namespace pozdnyakov
 
   bool isInteger(const std::string &str)
   {
-    if (str.empty()) {
+    if (str.empty() || str == "-") {
       return false;
     }
     try {
@@ -36,7 +36,7 @@ namespace pozdnyakov
       }
       out << "\n";
     } catch (const std::out_of_range &) {
-      out << "<EMPTY>\n";
+      out << "<INVALID COMMAND>\n";
     }
   }
 
