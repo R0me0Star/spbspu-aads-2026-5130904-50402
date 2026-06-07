@@ -30,9 +30,9 @@ namespace pozdnyakov
       if (dict.empty()) {
         out << "<EMPTY>\n";
       } else {
-        out << name << " ";
+        out << name;
         for (auto it = dict.begin(); it != dict.end(); ++it) {
-          out << (*it).first << " " << (*it).second << " ";
+          out << " " << (*it).first << " " << (*it).second;
         }
         out << "\n";
       }
