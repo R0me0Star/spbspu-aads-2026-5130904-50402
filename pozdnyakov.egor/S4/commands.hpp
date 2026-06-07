@@ -11,10 +11,10 @@ namespace pozdnyakov
   using Dataset = BSTree< int, std::string >;
   using Datasets = BSTree< std::string, Dataset >;
 
-  void cmdPrint(std::istream &, std::ostream &, Datasets &);
-  void cmdIntersect(std::istream &, std::ostream &, Datasets &);
-  void cmdComplement(std::istream &, std::ostream &, Datasets &);
-  void cmdUnion(std::istream &, std::ostream &, Datasets &);
+  void cmdPrint(std::istream &in, std::ostream &out, Datasets &datasets);
+  void cmdIntersect(std::istream &in, std::ostream &out, Datasets &datasets);
+  void cmdComplement(std::istream &in, std::ostream &out, Datasets &datasets);
+  void cmdUnion(std::istream &in, std::ostream &out, Datasets &datasets);
 
   bool isInteger(const std::string &str);
 

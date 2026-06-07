@@ -1,5 +1,6 @@
 #include "commands.hpp"
 #include <limits>
+#include <string>
 
 namespace pozdnyakov
 {
@@ -20,12 +21,12 @@ namespace pozdnyakov
     }
   }
 
-  void cmdPrint(std::istream &, std::ostream &out, Datasets &datasets)
+  void cmdPrint(std::istream &in, std::ostream &out, Datasets &datasets)
   {
     std::string name;
-    std::cin >> name;
+    in >> name;
     try {
-      Dataset &dict = datasets.get(name);
+      const Dataset &dict = datasets.get(name);
       bool isEmpty = true;
       for (auto it = dict.begin(); it != dict.end(); ++it) {
         out << (*it).first << " " << (*it).second << " ";
@@ -40,37 +41,43 @@ namespace pozdnyakov
     }
   }
 
-  void cmdIntersect(std::istream &, std::ostream &out, Datasets &datasets)
+  void cmdIntersect(std::istream &in, std::ostream &out, Datasets &datasets)
   {
-    std::string resultName, dict1, dict2;
-    std::cin >> resultName >> dict1 >> dict2;
+    std::string resultName;
+    std::string dict1;
+    std::string dict2;
+    in >> resultName >> dict1 >> dict2;
     try {
-      Dataset intersected = intersect(datasets.get(dict1), datasets.get(dict2));
-      datasets.push(resultName, std::move(intersected));
+      const Dataset intersected = intersect(datasets.get(dict1), datasets.get(dict2));
+      datasets.push(resultName, intersected);
     } catch (const std::out_of_range &) {
       out << "<INVALID COMMAND>\n";
     }
   }
 
-  void cmdComplement(std::istream &, std::ostream &out, Datasets &datasets)
+  void cmdComplement(std::istream &in, std::ostream &out, Datasets &datasets)
   {
-    std::string resultName, dict1, dict2;
-    std::cin >> resultName >> dict1 >> dict2;
+    std::string resultName;
+    std::string dict1;
+    std::string dict2;
+    in >> resultName >> dict1 >> dict2;
     try {
-      Dataset comp = complement(datasets.get(dict1), datasets.get(dict2));
-      datasets.push(resultName, std::move(comp));
+      const Dataset comp = complement(datasets.get(dict1), datasets.get(dict2));
+      datasets.push(resultName, comp);
     } catch (const std::out_of_range &) {
       out << "<INVALID COMMAND>\n";
     }
   }
 
-  void cmdUnion(std::istream &, std::ostream &out, Datasets &datasets)
+  void cmdUnion(std::istream &in, std::ostream &out, Datasets &datasets)
   {
-    std::string resultName, dict1, dict2;
-    std::cin >> resultName >> dict1 >> dict2;
+    std::string resultName;
+    std::string dict1;
+    std::string dict2;
+    in >> resultName >> dict1 >> dict2;
     try {
-      Dataset unionTree = union_(datasets.get(dict1), datasets.get(dict2));
-      datasets.push(resultName, std::move(unionTree));
+      const Dataset uni = union_(datasets.get(dict1), datasets.get(dict2));
+      datasets.push(resultName, uni);
     } catch (const std::out_of_range &) {
       out << "<INVALID COMMAND>\n";
     }
