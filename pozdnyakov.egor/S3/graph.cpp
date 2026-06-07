@@ -64,31 +64,23 @@ namespace pozdnyakov
     return vertices_;
   }
 
-  Vector< EdgeInfo > Graph::getOutboundEdges(const std::string &from)
+  Vector< NodeEdges > Graph::getOutboundEdges(const std::string &from)
   {
-    Vector< EdgeInfo > result;
+    Vector< NodeEdges > result;
     for (auto it = edges_.begin(); it != edges_.end(); ++it) {
       if ((*it).first.first == from) {
-        const std::string &toNode = (*it).first.second;
-        const Vector< unsigned int > &weights = (*it).second;
-        for (std::size_t i = 0; i < weights.size(); ++i) {
-          result.pushBack({from, toNode, weights[i]});
-        }
+        result.pushBack({(*it).first.second, (*it).second});
       }
     }
     return result;
   }
 
-  Vector< EdgeInfo > Graph::getInboundEdges(const std::string &to)
+  Vector< NodeEdges > Graph::getInboundEdges(const std::string &to)
   {
-    Vector< EdgeInfo > result;
+    Vector< NodeEdges > result;
     for (auto it = edges_.begin(); it != edges_.end(); ++it) {
       if ((*it).first.second == to) {
-        const std::string &fromNode = (*it).first.first;
-        const Vector< unsigned int > &weights = (*it).second;
-        for (std::size_t i = 0; i < weights.size(); ++i) {
-          result.pushBack({fromNode, to, weights[i]});
-        }
+        result.pushBack({(*it).first.first, (*it).second});
       }
     }
     return result;

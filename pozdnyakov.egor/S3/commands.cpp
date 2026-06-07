@@ -32,9 +32,8 @@ namespace pozdnyakov
     }
     std::sort(names.begin(), names.end());
     for (std::size_t i = 0; i < names.size(); ++i) {
-      std::cout << names[i] << (i + 1 == names.size() ? "" : " ");
+      std::cout << names[i] << "\n";
     }
-    std::cout << "\n";
   }
 
   void cmdVertexes(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens)
@@ -48,9 +47,8 @@ namespace pozdnyakov
       Vector< std::string > verts = targetGraph->getVertices();
       std::sort(verts.begin(), verts.end());
       for (std::size_t i = 0; i < verts.size(); ++i) {
-        std::cout << verts[i] << (i + 1 == verts.size() ? "" : " ");
+        std::cout << verts[i] << "\n";
       }
-      std::cout << "\n";
     } else {
       printInvalid();
     }
@@ -64,15 +62,18 @@ namespace pozdnyakov
     }
     Graph *targetGraph = findGraph(dict, tokens[1]);
     if (targetGraph && targetGraph->hasVertex(tokens[2])) {
-      Vector< EdgeInfo > edges = targetGraph->getOutboundEdges(tokens[2]);
-      std::sort(edges.begin(), edges.end(), [](const EdgeInfo &a, const EdgeInfo &b) {
-        if (a.to != b.to) {
-          return a.to < b.to;
-        }
-        return a.weight < b.weight;
+      Vector< NodeEdges > edges = targetGraph->getOutboundEdges(tokens[2]);
+      std::sort(edges.begin(), edges.end(), [](const NodeEdges &a, const NodeEdges &b) {
+        return a.vertex < b.vertex;
       });
       for (std::size_t i = 0; i < edges.size(); ++i) {
-        std::cout << edges[i].to << " " << edges[i].weight << "\n";
+        std::cout << edges[i].vertex;
+        Vector< unsigned int > w = edges[i].weights;
+        std::sort(w.begin(), w.end());
+        for (std::size_t j = 0; j < w.size(); ++j) {
+          std::cout << " " << w[j];
+        }
+        std::cout << "\n";
       }
     } else {
       printInvalid();
@@ -87,15 +88,18 @@ namespace pozdnyakov
     }
     Graph *targetGraph = findGraph(dict, tokens[1]);
     if (targetGraph && targetGraph->hasVertex(tokens[2])) {
-      Vector< EdgeInfo > edges = targetGraph->getInboundEdges(tokens[2]);
-      std::sort(edges.begin(), edges.end(), [](const EdgeInfo &a, const EdgeInfo &b) {
-        if (a.from != b.from) {
-          return a.from < b.from;
-        }
-        return a.weight < b.weight;
+      Vector< NodeEdges > edges = targetGraph->getInboundEdges(tokens[2]);
+      std::sort(edges.begin(), edges.end(), [](const NodeEdges &a, const NodeEdges &b) {
+        return a.vertex < b.vertex;
       });
       for (std::size_t i = 0; i < edges.size(); ++i) {
-        std::cout << edges[i].from << " " << edges[i].weight << "\n";
+        std::cout << edges[i].vertex;
+        Vector< unsigned int > w = edges[i].weights;
+        std::sort(w.begin(), w.end());
+        for (std::size_t j = 0; j < w.size(); ++j) {
+          std::cout << " " << w[j];
+        }
+        std::cout << "\n";
       }
     } else {
       printInvalid();

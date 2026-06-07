@@ -16,6 +16,12 @@ namespace pozdnyakov
     unsigned int weight;
   };
 
+  struct NodeEdges
+  {
+    std::string vertex;
+    Vector< unsigned int > weights;
+  };
+
   class Graph
   {
   private:
@@ -35,9 +41,9 @@ namespace pozdnyakov
 
     const Vector< std::string > &getVertices() const;
 
-    Vector< EdgeInfo > getOutboundEdges(const std::string &from);
+    Vector< NodeEdges > getOutboundEdges(const std::string &from);
 
-    Vector< EdgeInfo > getInboundEdges(const std::string &to);
+    Vector< NodeEdges > getInboundEdges(const std::string &to);
 
     Vector< EdgeInfo > getAllEdges();
   };
