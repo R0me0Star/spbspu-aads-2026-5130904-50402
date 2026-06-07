@@ -27,15 +27,15 @@ namespace pozdnyakov
     in >> name;
     try {
       const Dataset &dict = datasets.get(name);
-      bool isEmpty = true;
-      for (auto it = dict.begin(); it != dict.end(); ++it) {
-        out << (*it).first << " " << (*it).second << " ";
-        isEmpty = false;
+      if (dict.empty()) {
+        out << "<EMPTY>\n";
+      } else {
+        out << name << " ";
+        for (auto it = dict.begin(); it != dict.end(); ++it) {
+          out << (*it).first << " " << (*it).second << " ";
+        }
+        out << "\n";
       }
-      if (isEmpty) {
-        out << "<EMPTY>";
-      }
-      out << "\n";
     } catch (const std::out_of_range &) {
       out << "<INVALID COMMAND>\n";
     }
