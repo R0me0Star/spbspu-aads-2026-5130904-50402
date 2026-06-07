@@ -31,7 +31,7 @@ namespace pozdnyakov
 
     void addEdge(const std::string &from, const std::string &to, unsigned int weight);
 
-    bool removeEdges(const std::string &from, const std::string &to);
+    bool removeEdge(const std::string &from, const std::string &to, unsigned int weight);
 
     const Vector< std::string > &getVertices() const;
 

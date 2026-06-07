@@ -38,12 +38,23 @@ namespace pozdnyakov
     }
   }
 
-  bool Graph::removeEdges(const std::string &from, const std::string &to)
+  bool Graph::removeEdge(const std::string &from, const std::string &to, unsigned int weight)
   {
     std::pair< std::string, std::string > key{from, to};
     if (edges_.has(key)) {
-      edges_.drop(key);
-      return true;
+      Vector< unsigned int > &weights = edges_.at(key);
+      for (std::size_t i = 0; i < weights.size(); ++i) {
+        if (weights[i] == weight) {
+          for (std::size_t j = i + 1; j < weights.size(); ++j) {
+            weights[j - 1] = std::move(weights[j]);
+          }
+          weights.resize(weights.size() - 1);
+          if (weights.size() == 0) {
+            edges_.drop(key);
+          }
+          return true;
+        }
+      }
     }
     return false;
   }
