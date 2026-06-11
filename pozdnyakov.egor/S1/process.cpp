@@ -9,23 +9,23 @@ namespace pozdnyakov
   {
     List< List< ValueType > > result;
 
-    List< LCIter< ValueType > > iters;
-    List< LCIter< ValueType > > ends;
+    List< LCIter< ValueType > > iterators;
+    List< LCIter< ValueType > > endIterators;
 
-    LIter< LCIter< ValueType > > itersTail = iters.end();
-    LIter< LCIter< ValueType > > endsTail = ends.end();
+    LIter< LCIter< ValueType > > iteratorsTail = iterators.end();
+    LIter< LCIter< ValueType > > endIteratorsTail = endIterators.end();
 
     for (auto it = sequences.cbegin(); it != sequences.cend(); ++it) {
-      if (iters.empty()) {
-        iters.pushFront(it->second.cbegin());
-        ends.pushFront(it->second.cend());
-        itersTail = iters.begin();
-        endsTail = ends.begin();
+      if (iterators.empty()) {
+        iterators.pushFront(it->second.cbegin());
+        endIterators.pushFront(it->second.cend());
+        iteratorsTail = iterators.begin();
+        endIteratorsTail = endIterators.begin();
       } else {
-        iters.insertAfter(itersTail, it->second.cbegin());
-        ends.insertAfter(endsTail, it->second.cend());
-        ++itersTail;
-        ++endsTail;
+        iterators.insertAfter(iteratorsTail, it->second.cbegin());
+        endIterators.insertAfter(endIteratorsTail, it->second.cend());
+        ++iteratorsTail;
+        ++endIteratorsTail;
       }
     }
 
@@ -37,19 +37,19 @@ namespace pozdnyakov
       List< ValueType > currentRow;
       LIter< ValueType > currentRowTail = currentRow.end();
 
-      auto it = iters.begin();
-      auto endIt = ends.begin();
+      auto it = iterators.begin();
+      auto endIt = endIterators.begin();
 
-      for (; it != iters.end() && endIt != ends.end(); ++it, ++endIt) {
+      for (; it != iterators.end() && endIt != endIterators.end(); ++it, ++endIt) {
         if (*it != *endIt) {
           elementsLeft = true;
-          ValueType val = *(*it);
+          const ValueType value = *(*it);
 
           if (currentRow.empty()) {
-            currentRow.pushFront(val);
+            currentRow.pushFront(value);
             currentRowTail = currentRow.begin();
           } else {
-            currentRow.insertAfter(currentRowTail, val);
+            currentRow.insertAfter(currentRowTail, value);
             ++currentRowTail;
           }
 
@@ -78,14 +78,15 @@ namespace pozdnyakov
     List< ValueType > sums;
     LIter< ValueType > sumsTail = sums.end();
 
-    for (auto rowIt = rows.cbegin(); rowIt != rows.cend(); ++rowIt) {
+    for (auto rowIterator = rows.cbegin(); rowIterator != rows.cend(); ++rowIterator) {
       ValueType currentRowSum = 0;
 
-      for (auto elIt = rowIt->cbegin(); elIt != rowIt->cend(); ++elIt) {
-        if (currentRowSum > std::numeric_limits< ValueType >::max() - *elIt) {
+      for (auto elementIterator = rowIterator->cbegin(); elementIterator != rowIterator->cend(); ++elementIterator) {
+        const ValueType value = *elementIterator;
+        if (currentRowSum > std::numeric_limits< ValueType >::max() - value) {
           throw std::overflow_error("Sum calculation overflow");
         }
-        currentRowSum += *elIt;
+        currentRowSum += value;
       }
 
       if (sums.empty()) {

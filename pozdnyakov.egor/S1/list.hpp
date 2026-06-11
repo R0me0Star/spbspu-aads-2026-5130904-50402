@@ -1,5 +1,5 @@
-#ifndef POZDNYAKOV_LIST_HPP
-#define POZDNYAKOV_LIST_HPP
+#ifndef LIST_HPP
+#define LIST_HPP
 
 #include <cstddef>
 #include <iterator>
@@ -18,20 +18,24 @@ namespace pozdnyakov
       {}
     };
 
-    template < class T > struct Node: BaseNode
+    template < class T >
+    struct Node: BaseNode
     {
       T data;
-      Node(const T &val):
+      Node(const T &value):
         BaseNode(),
-        data(val)
+        data(value)
       {}
     };
   }
 
-  template < class T > class List;
-  template < class T > class LCIter;
+  template < class T >
+  class List;
+  template < class T >
+  class LCIter;
 
-  template < class T > class LIter
+  template < class T >
+  class LIter
   {
     friend class List< T >;
     friend class LCIter< T >;
@@ -72,7 +76,7 @@ namespace pozdnyakov
 
     LIter operator++(int)
     {
-      LIter tmp = *this;
+      const LIter tmp = *this;
       ++(*this);
       return tmp;
     }
@@ -87,7 +91,8 @@ namespace pozdnyakov
     }
   };
 
-  template < class T > class LCIter
+  template < class T >
+  class LCIter
   {
     friend class List< T >;
 
@@ -130,7 +135,7 @@ namespace pozdnyakov
 
     LCIter operator++(int)
     {
-      LCIter tmp = *this;
+      const LCIter tmp = *this;
       ++(*this);
       return tmp;
     }
@@ -145,7 +150,8 @@ namespace pozdnyakov
     }
   };
 
-  template < class T > class List
+  template < class T >
+  class List
   {
   private:
     detail::BaseNode *fakeNode;
@@ -192,8 +198,7 @@ namespace pozdnyakov
     List(List &&other) noexcept:
       fakeNode(other.fakeNode)
     {
-      other.fakeNode = new detail::BaseNode();
-      other.fakeNode->next = other.fakeNode;
+      other.fakeNode = nullptr;
     }
 
     List &operator=(const List &other)
@@ -211,15 +216,18 @@ namespace pozdnyakov
         clear();
         delete fakeNode;
         fakeNode = other.fakeNode;
-        other.fakeNode = new detail::BaseNode();
-        other.fakeNode->next = other.fakeNode;
+        other.fakeNode = nullptr;
       }
       return *this;
     }
 
-    void pushFront(const T &val)
+    void pushFront(const T &value)
     {
-      detail::Node< T > *newNode = new detail::Node< T >(val);
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
+      detail::Node< T > *newNode = new detail::Node< T >(value);
       newNode->next = fakeNode->next;
       fakeNode->next = newNode;
     }
@@ -233,10 +241,10 @@ namespace pozdnyakov
       }
     }
 
-    void insertAfter(LIter< T > pos, const T &val)
+    void insertAfter(LIter< T > pos, const T &value)
     {
       if (pos.ptr) {
-        detail::Node< T > *newNode = new detail::Node< T >(val);
+        detail::Node< T > *newNode = new detail::Node< T >(value);
         newNode->next = pos.ptr->next;
         pos.ptr->next = newNode;
       }
@@ -260,7 +268,7 @@ namespace pozdnyakov
 
     bool empty() const noexcept
     {
-      return fakeNode->next == fakeNode;
+      return fakeNode == nullptr || fakeNode->next == fakeNode;
     }
 
     T &front()
@@ -274,7 +282,7 @@ namespace pozdnyakov
 
     LIter< T > begin()
     {
-      return LIter< T >(fakeNode->next);
+      return LIter< T >(fakeNode ? fakeNode->next : nullptr);
     }
     LIter< T > end()
     {
@@ -282,7 +290,7 @@ namespace pozdnyakov
     }
     LCIter< T > cbegin() const
     {
-      return LCIter< T >(fakeNode->next);
+      return LCIter< T >(fakeNode ? fakeNode->next : nullptr);
     }
     LCIter< T > cend() const
     {

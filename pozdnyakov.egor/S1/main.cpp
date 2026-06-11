@@ -1,36 +1,36 @@
-#include "list.hpp"
-#include "process.hpp"
 #include <exception>
 #include <iostream>
 #include <string>
+#include "list.hpp"
+#include "process.hpp"
 
 int main()
 {
   try {
     pozdnyakov::List< pozdnyakov::NamedSequence > sequences;
-    pozdnyakov::LIter< pozdnyakov::NamedSequence > seqTail = sequences.end();
+    pozdnyakov::LIter< pozdnyakov::NamedSequence > sequenceTail = sequences.end();
 
     std::string name;
 
     while (std::cin >> name) {
       if (sequences.empty()) {
         sequences.pushFront({name, pozdnyakov::List< pozdnyakov::ValueType >()});
-        seqTail = sequences.begin();
+        sequenceTail = sequences.begin();
       } else {
-        sequences.insertAfter(seqTail, {name, pozdnyakov::List< pozdnyakov::ValueType >()});
-        ++seqTail;
+        sequences.insertAfter(sequenceTail, {name, pozdnyakov::List< pozdnyakov::ValueType >()});
+        ++sequenceTail;
       }
 
-      pozdnyakov::LIter< pozdnyakov::ValueType > valTail = seqTail->second.end();
-      pozdnyakov::ValueType val;
+      pozdnyakov::LIter< pozdnyakov::ValueType > valueTail = sequenceTail->second.end();
+      pozdnyakov::ValueType value = 0;
 
-      while (std::cin >> val) {
-        if (seqTail->second.empty()) {
-          seqTail->second.pushFront(val);
-          valTail = seqTail->second.begin();
+      while (std::cin >> value) {
+        if (sequenceTail->second.empty()) {
+          sequenceTail->second.pushFront(value);
+          valueTail = sequenceTail->second.begin();
         } else {
-          seqTail->second.insertAfter(valTail, val);
-          ++valTail;
+          sequenceTail->second.insertAfter(valueTail, value);
+          ++valueTail;
         }
       }
 
@@ -47,7 +47,7 @@ int main()
     }
 
     bool firstName = true;
-    for (auto it = sequences.begin(); it != sequences.end(); ++it) {
+    for (auto it = sequences.cbegin(); it != sequences.cend(); ++it) {
       if (!firstName) {
         std::cout << " ";
       }
@@ -56,31 +56,32 @@ int main()
     }
     std::cout << "\n";
 
-    pozdnyakov::List< pozdnyakov::List< pozdnyakov::ValueType > > rows = pozdnyakov::buildInterleavedRows(sequences);
+    const pozdnyakov::List< pozdnyakov::List< pozdnyakov::ValueType > > rows =
+        pozdnyakov::buildInterleavedRows(sequences);
 
-    for (auto rowIt = rows.begin(); rowIt != rows.end(); ++rowIt) {
-      bool firstEl = true;
-      for (auto elIt = rowIt->begin(); elIt != rowIt->end(); ++elIt) {
-        if (!firstEl) {
+    for (auto rowIterator = rows.cbegin(); rowIterator != rows.cend(); ++rowIterator) {
+      bool firstElement = true;
+      for (auto elementIterator = rowIterator->cbegin(); elementIterator != rowIterator->cend(); ++elementIterator) {
+        if (!firstElement) {
           std::cout << " ";
         }
-        std::cout << *elIt;
-        firstEl = false;
+        std::cout << *elementIterator;
+        firstElement = false;
       }
       std::cout << "\n";
     }
 
-    pozdnyakov::List< pozdnyakov::ValueType > sums = pozdnyakov::calculateSums(rows);
+    const pozdnyakov::List< pozdnyakov::ValueType > sums = pozdnyakov::calculateSums(rows);
 
     if (sums.empty()) {
       std::cout << 0 << "\n";
     } else {
       bool firstSum = true;
-      for (auto sumIt = sums.begin(); sumIt != sums.end(); ++sumIt) {
+      for (auto sumIterator = sums.cbegin(); sumIterator != sums.cend(); ++sumIterator) {
         if (!firstSum) {
           std::cout << " ";
         }
-        std::cout << *sumIt;
+        std::cout << *sumIterator;
         firstSum = false;
       }
       std::cout << "\n";

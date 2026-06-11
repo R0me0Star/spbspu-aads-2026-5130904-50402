@@ -1,10 +1,10 @@
-#ifndef POZDNYAKOV_PROCESS_HPP
-#define POZDNYAKOV_PROCESS_HPP
+#ifndef PROCESS_HPP
+#define PROCESS_HPP
 
-#include "list.hpp"
 #include <cstddef>
 #include <string>
 #include <utility>
+#include "list.hpp"
 
 namespace pozdnyakov
 {

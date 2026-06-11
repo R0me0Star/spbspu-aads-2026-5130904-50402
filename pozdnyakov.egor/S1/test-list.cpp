@@ -1,5 +1,5 @@
-#include "list.hpp"
 #include <boost/test/unit_test.hpp>
+#include "list.hpp"
 
 using namespace pozdnyakov;
 
@@ -15,9 +15,9 @@ BOOST_AUTO_TEST_CASE(testListInsertAndIterators)
 
   list.insertAfter(list.begin(), 20);
 
-  int expected[] = {10, 20};
+  const int expected[] = {10, 20};
   int i = 0;
-  for (auto it = list.begin(); it != list.end(); ++it) {
+  for (auto it = list.cbegin(); it != list.cend(); ++it) {
     BOOST_CHECK_EQUAL(*it, expected[i]);
     ++i;
   }
@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(testListCopyExceptionSafety)
 
   list2.insertAfter(list2.begin(), 3);
 
-  auto it = list1.begin();
+  auto it = list1.cbegin();
   ++it;
   BOOST_CHECK_EQUAL(*it, 2);
 }
