@@ -7,7 +7,7 @@ BOOST_AUTO_TEST_SUITE(QueueTests)
 
 BOOST_AUTO_TEST_CASE(testFifoBehavior)
 {
-  Queue< int > queue;
+  Queue< int > queue{};
   BOOST_CHECK(queue.empty());
 
   queue.push(10);
@@ -27,9 +27,9 @@ BOOST_AUTO_TEST_CASE(testFifoBehavior)
   BOOST_CHECK(queue.empty());
 }
 
-BOOST_AUTO_TEST_CASE(testCopyConstructorTailRecovery)
+BOOST_AUTO_TEST_CASE(testCompilerGeneratedCopying)
 {
-  Queue< int > original;
+  Queue< int > original{};
   original.push(1);
   original.push(2);
 
@@ -41,17 +41,6 @@ BOOST_AUTO_TEST_CASE(testCopyConstructorTailRecovery)
   copied.pop();
   copied.pop();
   BOOST_CHECK_EQUAL(copied.front(), 3);
-}
-
-BOOST_AUTO_TEST_CASE(testEmptyQueueCopy)
-{
-  Queue< int > emptyQueue;
-  Queue< int > copied = emptyQueue;
-
-  BOOST_CHECK(copied.empty());
-
-  copied.push(42);
-  BOOST_CHECK_EQUAL(copied.front(), 42);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

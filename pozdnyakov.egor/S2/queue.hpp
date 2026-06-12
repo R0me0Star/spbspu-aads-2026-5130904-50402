@@ -1,6 +1,8 @@
 #ifndef QUEUE_HPP
 #define QUEUE_HPP
 
+#include <iterator>
+#include <utility>
 #include "list.hpp"
 
 namespace pozdnyakov
@@ -10,65 +12,44 @@ namespace pozdnyakov
   class Queue
   {
   private:
-    List< T > container;
-    LIter< T > tail;
+    List< T > container{};
+    std::size_t size_{0};
 
   public:
     Queue():
       container(),
-      tail(container.end())
+      size_(0)
     {}
-
-    Queue(const Queue &other):
-      container(other.container),
-      tail(container.end())
-    {
-      if (!container.empty()) {
-        tail = container.begin();
-        LIter< T > next = tail;
-        ++next;
-        while (next != container.end()) {
-          ++tail;
-          ++next;
-        }
-      }
-    }
-
-    Queue &operator=(const Queue &other)
-    {
-      if (this != &other) {
-        container = other.container;
-        if (container.empty()) {
-          tail = container.end();
-        } else {
-          tail = container.begin();
-          LIter< T > next = tail;
-          ++next;
-          while (next != container.end()) {
-            ++tail;
-            ++next;
-          }
-        }
-      }
-      return *this;
-    }
 
     void push(const T &val)
     {
       if (empty()) {
         container.pushFront(val);
-        tail = container.begin();
       } else {
-        container.insertAfter(tail, val);
-        ++tail;
+        LIter< T > tailIter = container.begin();
+        std::advance(tailIter, size_ - 1);
+        container.insertAfter(tailIter, val);
       }
+      ++size_;
+    }
+
+    void push(T &&val)
+    {
+      if (empty()) {
+        container.pushFront(std::move(val));
+      } else {
+        LIter< T > tailIter = container.begin();
+        std::advance(tailIter, size_ - 1);
+        container.insertAfter(tailIter, std::move(val));
+      }
+      ++size_;
     }
 
     void pop()
     {
-      container.popFront();
-      if (container.empty()) {
-        tail = container.end();
+      if (!empty()) {
+        container.popFront();
+        --size_;
       }
     }
 
@@ -84,7 +65,7 @@ namespace pozdnyakov
 
     bool empty() const noexcept
     {
-      return container.empty();
+      return size_ == 0;
     }
   };
 

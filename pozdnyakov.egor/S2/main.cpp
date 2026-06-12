@@ -9,7 +9,7 @@
 int main(const int argc, char *argv[])
 {
   std::istream *input = &std::cin;
-  std::ifstream fileStream;
+  std::ifstream fileStream{};
 
   if (argc == 2) {
     fileStream.open(argv[1]);
@@ -23,8 +23,8 @@ int main(const int argc, char *argv[])
     return 1;
   }
 
-  pozdnyakov::Stack< long long > results;
-  std::string line;
+  pozdnyakov::Stack< long long > results{};
+  std::string line{};
 
   while (std::getline(*input, line)) {
     bool isEmpty = true;

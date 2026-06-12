@@ -1,6 +1,7 @@
 #ifndef STACK_HPP
 #define STACK_HPP
 
+#include <utility>
 #include "list.hpp"
 
 namespace pozdnyakov
@@ -10,7 +11,7 @@ namespace pozdnyakov
   class Stack
   {
   private:
-    List< T > container;
+    List< T > container{};
 
   public:
     Stack():
@@ -22,9 +23,16 @@ namespace pozdnyakov
       container.pushFront(val);
     }
 
+    void push(T &&val)
+    {
+      container.pushFront(std::move(val));
+    }
+
     void pop()
     {
-      container.popFront();
+      if (!empty()) {
+        container.popFront();
+      }
     }
 
     T &top()

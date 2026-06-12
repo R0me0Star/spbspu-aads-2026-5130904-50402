@@ -7,7 +7,7 @@ BOOST_AUTO_TEST_SUITE(StackTests)
 
 BOOST_AUTO_TEST_CASE(testLifoBehavior)
 {
-  Stack< int > stack;
+  Stack< int > stack{};
   BOOST_CHECK(stack.empty());
 
   stack.push(10);
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(testLifoBehavior)
 
 BOOST_AUTO_TEST_CASE(testClearMethod)
 {
-  Stack< int > stack;
+  Stack< int > stack{};
   stack.push(1);
   stack.push(2);
 

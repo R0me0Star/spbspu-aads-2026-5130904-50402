@@ -89,7 +89,7 @@ namespace pozdnyakov
     long long value;
     char op;
 
-    Token(TokenType t, long long v, char o):
+    Token(const TokenType t, const long long v, const char o):
       type(t),
       value(v),
       op(o)
@@ -112,7 +112,7 @@ namespace pozdnyakov
 
   Queue< Token > tokenize(const std::string &expr)
   {
-    Queue< Token > tokens;
+    Queue< Token > tokens{};
     size_t i = 0;
 
     while (i < expr.length()) {
@@ -153,8 +153,8 @@ namespace pozdnyakov
 
   Queue< Token > infixToPostfix(Queue< Token > &infix)
   {
-    Queue< Token > postfix;
-    Stack< Token > operators;
+    Queue< Token > postfix{};
+    Stack< Token > operators{};
 
     while (!infix.empty()) {
       const Token token = infix.front();
@@ -200,7 +200,7 @@ namespace pozdnyakov
       throw std::runtime_error("Empty expression");
     }
 
-    Stack< long long > values;
+    Stack< long long > values{};
 
     while (!postfix.empty()) {
       const Token token = postfix.front();
