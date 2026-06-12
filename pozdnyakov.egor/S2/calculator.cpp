@@ -80,7 +80,12 @@ namespace pozdnyakov
     }
   }
 
-  enum class TokenType { Number, Operator, LParen, RParen };
+  enum class TokenType {
+    Number,
+    Operator,
+    LParen,
+    RParen,
+  };
 
   class Token
   {
