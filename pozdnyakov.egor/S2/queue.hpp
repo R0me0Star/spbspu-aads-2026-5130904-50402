@@ -1,11 +1,12 @@
-#ifndef POZDNYAKOV_QUEUE_HPP
-#define POZDNYAKOV_QUEUE_HPP
+#ifndef QUEUE_HPP
+#define QUEUE_HPP
 
-#include "../common/list.hpp"
+#include "list.hpp"
 
 namespace pozdnyakov
 {
-  template < typename T >
+
+  template < class T >
   class Queue
   {
   private:
@@ -14,15 +15,15 @@ namespace pozdnyakov
 
   public:
     Queue():
+      container(),
       tail(container.end())
     {}
 
     Queue(const Queue &other):
-      container(other.container)
+      container(other.container),
+      tail(container.end())
     {
-      if (container.empty()) {
-        tail = container.end();
-      } else {
+      if (!container.empty()) {
         tail = container.begin();
         LIter< T > next = tail;
         ++next;
@@ -86,6 +87,7 @@ namespace pozdnyakov
       return container.empty();
     }
   };
+
 }
 
 #endif

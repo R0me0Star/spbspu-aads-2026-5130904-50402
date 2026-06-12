@@ -9,7 +9,7 @@ namespace pozdnyakov
 {
   namespace
   {
-    long long safeAdd(long long left, long long right)
+    long long safeAdd(const long long left, const long long right)
     {
       if (right > 0 && left > std::numeric_limits< long long >::max() - right) {
         throw std::runtime_error("Overflow");
@@ -20,7 +20,7 @@ namespace pozdnyakov
       return left + right;
     }
 
-    long long safeSub(long long left, long long right)
+    long long safeSub(const long long left, const long long right)
     {
       if (right < 0 && left > std::numeric_limits< long long >::max() + right) {
         throw std::runtime_error("Overflow");
@@ -31,7 +31,7 @@ namespace pozdnyakov
       return left - right;
     }
 
-    long long safeMul(long long left, long long right)
+    long long safeMul(const long long left, const long long right)
     {
       if (left == 0 || right == 0) {
         return 0;
@@ -51,7 +51,7 @@ namespace pozdnyakov
       return left * right;
     }
 
-    long long safeDiv(long long left, long long right)
+    long long safeDiv(const long long left, const long long right)
     {
       if (right == 0) {
         throw std::runtime_error("Division by zero");
@@ -62,7 +62,7 @@ namespace pozdnyakov
       return left / right;
     }
 
-    long long safeMod(long long left, long long right)
+    long long safeMod(const long long left, const long long right)
     {
       if (right == 0) {
         throw std::runtime_error("Modulo by zero");
@@ -82,14 +82,21 @@ namespace pozdnyakov
 
   enum class TokenType { Number, Operator, LParen, RParen };
 
-  struct Token
+  class Token
   {
+  public:
     TokenType type;
     long long value;
     char op;
+
+    Token(TokenType t, long long v, char o):
+      type(t),
+      value(v),
+      op(o)
+    {}
   };
 
-  int getPrecedence(char op)
+  int getPrecedence(const char op)
   {
     if (op == '&') {
       return 1;
@@ -117,7 +124,7 @@ namespace pozdnyakov
       if (std::isdigit(static_cast< unsigned char >(expr[i]))) {
         long long val = 0;
         while (i < expr.length() && std::isdigit(static_cast< unsigned char >(expr[i]))) {
-          int digit = expr[i] - '0';
+          const int digit = expr[i] - '0';
 
           if (val > (std::numeric_limits< long long >::max() - digit) / 10) {
             throw std::runtime_error("Number too large");
@@ -126,16 +133,16 @@ namespace pozdnyakov
           val = val * 10 + digit;
           ++i;
         }
-        tokens.push({TokenType::Number, val, '\0'});
+        tokens.push(Token(TokenType::Number, val, '\0'));
       } else if (expr[i] == '(') {
-        tokens.push({TokenType::LParen, 0, '\0'});
+        tokens.push(Token(TokenType::LParen, 0, '\0'));
         ++i;
       } else if (expr[i] == ')') {
-        tokens.push({TokenType::RParen, 0, '\0'});
+        tokens.push(Token(TokenType::RParen, 0, '\0'));
         ++i;
       } else if (expr[i] == '+' || expr[i] == '-' || expr[i] == '*' || expr[i] == '/' || expr[i] == '%'
                  || expr[i] == '&') {
-        tokens.push({TokenType::Operator, 0, expr[i]});
+        tokens.push(Token(TokenType::Operator, 0, expr[i]));
         ++i;
       } else {
         throw std::runtime_error("Invalid character in expression");
@@ -150,7 +157,7 @@ namespace pozdnyakov
     Stack< Token > operators;
 
     while (!infix.empty()) {
-      Token token = infix.front();
+      const Token token = infix.front();
       infix.pop();
 
       if (token.type == TokenType::Number) {
@@ -196,7 +203,7 @@ namespace pozdnyakov
     Stack< long long > values;
 
     while (!postfix.empty()) {
-      Token token = postfix.front();
+      const Token token = postfix.front();
       postfix.pop();
 
       if (token.type == TokenType::Number) {
@@ -205,13 +212,13 @@ namespace pozdnyakov
         if (values.empty()) {
           throw std::runtime_error("Invalid expression");
         }
-        long long right = values.top();
+        const long long right = values.top();
         values.pop();
 
         if (values.empty()) {
           throw std::runtime_error("Invalid expression");
         }
-        long long left = values.top();
+        const long long left = values.top();
         values.pop();
 
         long long result = 0;
@@ -242,7 +249,7 @@ namespace pozdnyakov
     if (values.empty()) {
       throw std::runtime_error("Invalid expression");
     }
-    long long finalResult = values.top();
+    const long long finalResult = values.top();
     values.pop();
 
     if (!values.empty()) {

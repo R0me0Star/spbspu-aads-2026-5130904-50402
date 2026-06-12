@@ -1,18 +1,21 @@
-#ifndef POZDNYAKOV_STACK_HPP
-#define POZDNYAKOV_STACK_HPP
+#ifndef STACK_HPP
+#define STACK_HPP
 
-#include "../common/list.hpp"
+#include "list.hpp"
 
 namespace pozdnyakov
 {
-  template < typename T >
+
+  template < class T >
   class Stack
   {
   private:
     List< T > container;
 
   public:
-    Stack() = default;
+    Stack():
+      container()
+    {}
 
     void push(const T &val)
     {
@@ -44,6 +47,7 @@ namespace pozdnyakov
       container.clear();
     }
   };
+
 }
 
 #endif

@@ -6,7 +6,7 @@
 #include "calculator.hpp"
 #include "stack.hpp"
 
-int main(int argc, char *argv[])
+int main(const int argc, char *argv[])
 {
   std::istream *input = &std::cin;
   std::ifstream fileStream;
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     }
 
     try {
-      long long currentResult = pozdnyakov::evaluateExpression(line);
+      const long long currentResult = pozdnyakov::evaluateExpression(line);
       results.push(currentResult);
     } catch (const std::exception &e) {
       std::cerr << "Error: " << e.what() << "\n";

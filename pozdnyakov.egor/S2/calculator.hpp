@@ -1,5 +1,5 @@
-#ifndef POZDNYAKOV_CALCULATOR_HPP
-#define POZDNYAKOV_CALCULATOR_HPP
+#ifndef CALCULATOR_HPP
+#define CALCULATOR_HPP
 
 #include <string>
 
