@@ -30,6 +30,12 @@ namespace pozdnyakov
     for (std::size_t i = 0; i < dict.size(); ++i) {
       names.pushBack(dict[i].first);
     }
+
+    if (names.empty()) {
+      std::cout << "\n";
+      return;
+    }
+
     std::sort(names.begin(), names.end());
     for (std::size_t i = 0; i < names.size(); ++i) {
       std::cout << names[i] << "\n";
@@ -45,6 +51,12 @@ namespace pozdnyakov
     Graph *targetGraph = findGraph(dict, tokens[1]);
     if (targetGraph) {
       Vector< std::string > verts = targetGraph->getVertices();
+
+      if (verts.empty()) {
+        std::cout << "\n";
+        return;
+      }
+
       std::sort(verts.begin(), verts.end());
       for (std::size_t i = 0; i < verts.size(); ++i) {
         std::cout << verts[i] << "\n";
@@ -63,6 +75,12 @@ namespace pozdnyakov
     Graph *targetGraph = findGraph(dict, tokens[1]);
     if (targetGraph && targetGraph->hasVertex(tokens[2])) {
       Vector< NodeEdges > edges = targetGraph->getOutboundEdges(tokens[2]);
+
+      if (edges.empty()) {
+        std::cout << "\n";
+        return;
+      }
+
       std::sort(edges.begin(), edges.end(), [](const NodeEdges &a, const NodeEdges &b) {
         return a.vertex < b.vertex;
       });
@@ -89,6 +107,12 @@ namespace pozdnyakov
     Graph *targetGraph = findGraph(dict, tokens[1]);
     if (targetGraph && targetGraph->hasVertex(tokens[2])) {
       Vector< NodeEdges > edges = targetGraph->getInboundEdges(tokens[2]);
+
+      if (edges.empty()) {
+        std::cout << "\n";
+        return;
+      }
+
       std::sort(edges.begin(), edges.end(), [](const NodeEdges &a, const NodeEdges &b) {
         return a.vertex < b.vertex;
       });
