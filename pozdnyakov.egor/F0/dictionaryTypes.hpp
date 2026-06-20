@@ -72,6 +72,10 @@ namespace pozdnyakov
     ~AvlDictionary();
 
     void addWord(const std::string &engWord, const std::string &rusWord, const std::string &partOfSpeech);
+    void addTrans(const std::string &engWord, const std::string &rusWord);
+    void translate(const std::string &engWord) const;
+    void show() const;
+    void count() const;
 
   private:
     detail::WordNode *root_;
@@ -83,6 +87,16 @@ namespace pozdnyakov
     detail::WordNode *rotateRight(detail::WordNode *node);
     detail::WordNode *rotateLeft(detail::WordNode *node);
     detail::WordNode *balance(detail::WordNode *node);
+
+    detail::WordNode *insertWord(detail::WordNode *node, const std::string &engWord, const std::string &rusWord,
+                                 const std::string &partOfSpeech);
+
+    detail::WordNode *findNode(detail::WordNode *node, const std::string &engWord) const;
+    void addTranslationToList(detail::WordNode *wordNode, const std::string &rusWord,
+                              const std::string &partOfSpeech) const;
+    void printInOrder(const detail::WordNode *node) const;
+    void countNodesAndTranslations(const detail::WordNode *node, std::size_t &wordsCount,
+                                   std::size_t &transCount) const;
   };
 
   AvlDictionary::AvlDictionary():
@@ -170,9 +184,156 @@ namespace pozdnyakov
     return node;
   }
 
+  void AvlDictionary::addTranslationToList(detail::WordNode *wordNode, const std::string &rusWord,
+                                           const std::string &partOfSpeech) const
+  {
+    if (wordNode->translationsHead_ == nullptr) {
+      wordNode->translationsHead_ = new detail::TranslationNode(rusWord, partOfSpeech);
+      return;
+    }
+
+    detail::TranslationNode *current = wordNode->translationsHead_;
+    while (current->next_ != nullptr) {
+      if (current->rusWord_ == rusWord) {
+        return;
+      }
+      current = current->next_;
+    }
+
+    if (current->rusWord_ != rusWord) {
+      current->next_ = new detail::TranslationNode(rusWord, partOfSpeech);
+    }
+  }
+
+  detail::WordNode *AvlDictionary::findNode(detail::WordNode *node, const std::string &engWord) const
+  {
+    if (node == nullptr) {
+      return nullptr;
+    }
+    if (engWord < node->engWord_) {
+      return findNode(node->left_, engWord);
+    } else if (engWord > node->engWord_) {
+      return findNode(node->right_, engWord);
+    } else {
+      return node;
+    }
+  }
+
+  detail::WordNode *AvlDictionary::insertWord(detail::WordNode *node, const std::string &engWord,
+                                              const std::string &rusWord, const std::string &partOfSpeech)
+  {
+    if (node == nullptr) {
+      detail::WordNode *newNode = new detail::WordNode(engWord);
+      newNode->translationsHead_ = new detail::TranslationNode(rusWord, partOfSpeech);
+      return newNode;
+    }
+
+    if (engWord < node->engWord_) {
+      node->left_ = insertWord(node->left_, engWord, rusWord, partOfSpeech);
+    } else if (engWord > node->engWord_) {
+      node->right_ = insertWord(node->right_, engWord, rusWord, partOfSpeech);
+    } else {
+      addTranslationToList(node, rusWord, partOfSpeech);
+      return node;
+    }
+
+    return balance(node);
+  }
+
   void AvlDictionary::addWord(const std::string &engWord, const std::string &rusWord, const std::string &partOfSpeech)
   {
-    std::cout << "Method prepared for: " << engWord << "\n";
+    root_ = insertWord(root_, engWord, rusWord, partOfSpeech);
+  }
+
+  void AvlDictionary::addTrans(const std::string &engWord, const std::string &rusWord)
+  {
+    detail::WordNode *node = findNode(root_, engWord);
+    if (node == nullptr) {
+      std::cout << "<ERROR: Word '" << engWord << "' not found>\n";
+      return;
+    }
+
+    std::string pos = "";
+    if (node->translationsHead_ != nullptr) {
+      pos = node->translationsHead_->partOfSpeech_;
+    }
+    addTranslationToList(node, rusWord, pos);
+  }
+
+  void AvlDictionary::translate(const std::string &engWord) const
+  {
+    detail::WordNode *node = findNode(root_, engWord);
+    if (node == nullptr) {
+      std::cout << "<NOT FOUND: " << engWord << ">\n";
+      return;
+    }
+
+    std::cout << engWord << ":\n";
+    detail::TranslationNode *current = node->translationsHead_;
+    while (current != nullptr) {
+      std::cout << "  [" << current->partOfSpeech_ << "]: " << current->rusWord_ << "\n";
+      current = current->next_;
+    }
+  }
+
+  void AvlDictionary::printInOrder(const detail::WordNode *node) const
+  {
+    if (node == nullptr) {
+      return;
+    }
+
+    printInOrder(node->left_);
+
+    std::cout << node->engWord_ << " [";
+    if (node->translationsHead_ != nullptr) {
+      std::cout << node->translationsHead_->partOfSpeech_;
+    }
+    std::cout << "]: ";
+
+    detail::TranslationNode *current = node->translationsHead_;
+    while (current != nullptr) {
+      std::cout << current->rusWord_;
+      if (current->next_ != nullptr) {
+        std::cout << ", ";
+      }
+      current = current->next_;
+    }
+    std::cout << "\n";
+
+    printInOrder(node->right_);
+  }
+
+  void AvlDictionary::show() const
+  {
+    std::cout << "<DICTIONARY>\n";
+    printInOrder(root_);
+  }
+
+  void AvlDictionary::countNodesAndTranslations(const detail::WordNode *node, std::size_t &wordsCount,
+                                                std::size_t &transCount) const
+  {
+    if (node == nullptr) {
+      return;
+    }
+
+    countNodesAndTranslations(node->left_, wordsCount, transCount);
+
+    wordsCount++;
+    detail::TranslationNode *current = node->translationsHead_;
+    while (current != nullptr) {
+      transCount++;
+      current = current->next_;
+    }
+
+    countNodesAndTranslations(node->right_, wordsCount, transCount);
+  }
+
+  void AvlDictionary::count() const
+  {
+    std::size_t wordsCount = 0;
+    std::size_t transCount = 0;
+    countNodesAndTranslations(root_, wordsCount, transCount);
+    std::cout << "<STATS: " << wordsCount << " words, " << transCount << " translations>\n";
   }
 
 }
