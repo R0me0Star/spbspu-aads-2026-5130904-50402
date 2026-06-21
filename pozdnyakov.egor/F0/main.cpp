@@ -1,5 +1,4 @@
-#include <clocale>
-#include <iostream>
+﻿#include <iostream>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -7,9 +6,6 @@
 
 int main()
 {
-  if (std::setlocale(LC_ALL, "ru_RU.UTF-8") == nullptr) {
-    std::setlocale(LC_ALL, ".UTF8");
-  }
 
   pozdnyakov::DictTable dicts;
   pozdnyakov::List< std::pair< std::string, pozdnyakov::CommandFunc > > cmds;

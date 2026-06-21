@@ -1,4 +1,4 @@
-#include "dictionary.hpp"
+﻿#include "dictionary.hpp"
 #include <iostream>
 
 namespace pozdnyakov
