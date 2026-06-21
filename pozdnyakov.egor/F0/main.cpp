@@ -1,26 +1,62 @@
-#include "dictionaryTypes.hpp"
+#include <clocale>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include "dictionary.hpp"
 
 int main()
 {
-  pozdnyakov::AvlDictionary myDictionary;
+  if (std::setlocale(LC_ALL, "ru_RU.UTF-8") == nullptr) {
+    std::setlocale(LC_ALL, ".UTF8");
+  }
 
-  // adding words command test
-  myDictionary.addWord("run", "бегать", "verb");
-  myDictionary.addWord("apple", "яблоко", "noun");
-  myDictionary.addWord("zebra", "зебра", "noun");
-  myDictionary.addWord("cat", "кот", "noun");
+  pozdnyakov::DictTable dicts;
+  pozdnyakov::List< std::pair< std::string, pozdnyakov::CommandFunc > > cmds;
 
-  // additional translate test
-  myDictionary.addTrans("run", "управлять");
-  myDictionary.addTrans("apple", "яблочко");
+  cmds.pushFront(std::make_pair("merge", &pozdnyakov::cmdMerge));
+  cmds.pushFront(std::make_pair("diff", &pozdnyakov::cmdDiff));
+  cmds.pushFront(std::make_pair("intersect", &pozdnyakov::cmdIntersect));
+  cmds.pushFront(std::make_pair("union", &pozdnyakov::cmdUnion));
+  cmds.pushFront(std::make_pair("filter", &pozdnyakov::cmdFilter));
+  cmds.pushFront(std::make_pair("count", &pozdnyakov::cmdCount));
+  cmds.pushFront(std::make_pair("show", &pozdnyakov::cmdShow));
+  cmds.pushFront(std::make_pair("reverse", &pozdnyakov::cmdReverse));
+  cmds.pushFront(std::make_pair("translate", &pozdnyakov::cmdTranslate));
+  cmds.pushFront(std::make_pair("del-trans", &pozdnyakov::cmdDelTrans));
+  cmds.pushFront(std::make_pair("del-word", &pozdnyakov::cmdDelWord));
+  cmds.pushFront(std::make_pair("add-trans", &pozdnyakov::cmdAddTrans));
+  cmds.pushFront(std::make_pair("add-word", &pozdnyakov::cmdAddWord));
+  cmds.pushFront(std::make_pair("drop", &pozdnyakov::cmdDrop));
+  cmds.pushFront(std::make_pair("make", &pozdnyakov::cmdMake));
 
-  // show command test
-  myDictionary.show();
+  std::string line;
+  while (std::getline(std::cin, line)) {
+    if (line.empty() || line == "exit") {
+      break;
+    }
 
-  // count & translate test
-  myDictionary.count();
-  myDictionary.translate("run");
-  myDictionary.translate("dog"); // this word does not exist
+    std::istringstream ss(line);
+    std::string cmdName;
+    ss >> cmdName;
+
+    bool found = false;
+    for (auto it = cmds.begin(); it != cmds.end(); ++it) {
+      if ((*it).first == cmdName) {
+        (*it).second(dicts, ss);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      std::cout << "<INVALID COMMAND>\n";
+    }
+  }
+
+  for (auto it = dicts.begin(); it != dicts.end(); ++it) {
+    delete (*it).second;
+  }
 
   return 0;
 }
