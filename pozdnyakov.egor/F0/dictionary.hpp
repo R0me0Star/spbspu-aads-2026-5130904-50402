@@ -2,9 +2,7 @@
 #define DICTIONARY_HPP
 
 #include <cstddef>
-#include <sstream>
 #include <string>
-#include <utility>
 #include "list.hpp"
 #include "vector.hpp"
 
@@ -117,28 +115,6 @@ namespace pozdnyakov
                         const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &others);
 
   void reverseSearch(const pozdnyakov::AvlDictionary &dict, const std::string &rusWord);
-
-  using DictTable = pozdnyakov::List< std::pair< std::string, pozdnyakov::AvlDictionary * > >;
-  using CommandFunc = void (*)(DictTable &, std::istringstream &);
-
-  AvlDictionary *getDict(DictTable &dicts, const std::string &name);
-  pozdnyakov::Vector< const AvlDictionary * > readDictList(DictTable &dicts, std::istringstream &ss, std::size_t n);
-
-  void cmdMake(DictTable &dicts, std::istringstream &ss);
-  void cmdDrop(DictTable &dicts, std::istringstream &ss);
-  void cmdAddWord(DictTable &dicts, std::istringstream &ss);
-  void cmdAddTrans(DictTable &dicts, std::istringstream &ss);
-  void cmdDelWord(DictTable &dicts, std::istringstream &ss);
-  void cmdDelTrans(DictTable &dicts, std::istringstream &ss);
-  void cmdTranslate(DictTable &dicts, std::istringstream &ss);
-  void cmdReverse(DictTable &dicts, std::istringstream &ss);
-  void cmdShow(DictTable &dicts, std::istringstream &ss);
-  void cmdCount(DictTable &dicts, std::istringstream &ss);
-  void cmdFilter(DictTable &dicts, std::istringstream &ss);
-  void cmdUnion(DictTable &dicts, std::istringstream &ss);
-  void cmdIntersect(DictTable &dicts, std::istringstream &ss);
-  void cmdDiff(DictTable &dicts, std::istringstream &ss);
-  void cmdMerge(DictTable &dicts, std::istringstream &ss);
 
 }
 

@@ -1,12 +1,13 @@
 ﻿#include <iostream>
-#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
+#include "commands.hpp"
 #include "dictionary.hpp"
+#include "list.hpp"
 
 int main()
 {
-
   pozdnyakov::DictTable dicts;
   pozdnyakov::List< std::pair< std::string, pozdnyakov::CommandFunc > > cmds;
 
@@ -26,27 +27,37 @@ int main()
   cmds.pushFront(std::make_pair("drop", &pozdnyakov::cmdDrop));
   cmds.pushFront(std::make_pair("make", &pozdnyakov::cmdMake));
 
-  std::string line;
-  while (std::getline(std::cin, line)) {
-    if (line.empty() || line == "exit") {
+  std::string cmdName;
+  while (std::cin >> cmdName) {
+    if (cmdName == "exit") {
       break;
     }
-
-    std::istringstream ss(line);
-    std::string cmdName;
-    ss >> cmdName;
 
     bool found = false;
     for (auto it = cmds.begin(); it != cmds.end(); ++it) {
       if ((*it).first == cmdName) {
-        (*it).second(dicts, ss);
         found = true;
+        try {
+          (*it).second(dicts, std::cin);
+        } catch (const std::bad_alloc &) {
+          std::cout << "<memory allocation failed>\n";
+        } catch (const std::exception &e) {
+          std::cout << e.what() << "\n";
+          std::cin.clear();
+          char c;
+          while (std::cin.get(c) && c != '\n') {
+          }
+        }
         break;
       }
     }
 
     if (!found) {
       std::cout << "<INVALID COMMAND>\n";
+      std::cin.clear();
+      char c;
+      while (std::cin.get(c) && c != '\n') {
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 ﻿#include "dictionary.hpp"
 #include <iostream>
+#include <stdexcept>
 
 namespace pozdnyakov
 {
@@ -212,8 +213,7 @@ namespace pozdnyakov
   {
     detail::WordNode *node = findNode(root_, engWord);
     if (node == nullptr) {
-      std::cout << "<Word '" << engWord << "' not found>\n";
-      return;
+      throw std::invalid_argument("<Word '" + engWord + "' not found>");
     }
 
     std::string pos = "";
@@ -232,8 +232,7 @@ namespace pozdnyakov
   {
     detail::WordNode *node = findNode(root_, engWord);
     if (node == nullptr) {
-      std::cout << "<Word '" << engWord << "' not found>\n";
-      return;
+      throw std::invalid_argument("<Word '" + engWord + "' not found>");
     }
 
     pozdnyakov::List< detail::Translation > temp;
@@ -457,227 +456,6 @@ namespace pozdnyakov
       std::cout << "None";
     }
     std::cout << "\n";
-  }
-
-  AvlDictionary *getDict(DictTable &dicts, const std::string &name)
-  {
-    for (auto it = dicts.begin(); it != dicts.end(); ++it) {
-      if ((*it).first == name) {
-        return (*it).second;
-      }
-    }
-    return nullptr;
-  }
-
-  pozdnyakov::Vector< const AvlDictionary * > readDictList(DictTable &dicts, std::istringstream &ss, std::size_t n)
-  {
-    pozdnyakov::Vector< const AvlDictionary * > list;
-    for (std::size_t i = 0; i < n; ++i) {
-      std::string name;
-      ss >> name;
-      AvlDictionary *d = getDict(dicts, name);
-      if (d != nullptr) {
-        list.pushBack(d);
-      } else {
-        std::cout << "Dictionary '" << name << "' not found>\n";
-      }
-    }
-    return list;
-  }
-
-  void cmdMake(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name;
-    ss >> name;
-    if (getDict(dicts, name) != nullptr) {
-      std::cout << "<INVALID COMMAND>\n";
-    } else {
-      dicts.pushFront(std::make_pair(name, new AvlDictionary()));
-      std::cout << "<DICT: " << name << " CREATED>\n";
-    }
-  }
-
-  void cmdDrop(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name;
-    ss >> name;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d) {
-      delete d;
-      pozdnyakov::List< std::pair< std::string, AvlDictionary * > > temp;
-      while (!dicts.empty()) {
-        auto p = dicts.front();
-        dicts.popFront();
-        if (p.first != name) {
-          temp.pushFront(p);
-        }
-      }
-      while (!temp.empty()) {
-        dicts.pushFront(temp.front());
-        temp.popFront();
-      }
-      std::cout << "<DROPPED: " << name << ">\n";
-    } else {
-      std::cout << "<Dictionary not found>\n";
-    }
-  }
-
-  void cmdAddWord(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name, eng, rus, pos;
-    ss >> name >> eng >> rus >> pos;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->addWord(eng, rus, pos);
-  }
-
-  void cmdAddTrans(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name, eng, rus;
-    ss >> name >> eng >> rus;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->addTrans(eng, rus);
-  }
-
-  void cmdDelWord(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name, eng;
-    ss >> name >> eng;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->delWord(eng);
-  }
-
-  void cmdDelTrans(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name, eng, rus;
-    ss >> name >> eng >> rus;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->delTrans(eng, rus);
-  }
-
-  void cmdTranslate(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name, eng;
-    ss >> name >> eng;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->translate(eng);
-  }
-
-  void cmdReverse(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name, rus;
-    ss >> name >> rus;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      reverseSearch(*d, rus);
-  }
-
-  void cmdShow(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name;
-    ss >> name;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->show();
-  }
-
-  void cmdCount(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string name;
-    ss >> name;
-    AvlDictionary *d = getDict(dicts, name);
-    if (d)
-      d->count();
-  }
-
-  void cmdFilter(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string newName, targetName, pos;
-    ss >> newName >> targetName >> pos;
-    AvlDictionary *d = getDict(dicts, targetName);
-    if (d && getDict(dicts, newName) == nullptr) {
-      AvlDictionary *newDict = new AvlDictionary();
-      filterDictionary(*d, *newDict, pos);
-      dicts.pushFront(std::make_pair(newName, newDict));
-      std::cout << "<FILTER: " << newName << " CREATED>\n";
-    }
-  }
-
-  void cmdUnion(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string targetName;
-    std::size_t n;
-    ss >> targetName >> n;
-    pozdnyakov::Vector< const AvlDictionary * > sources = readDictList(dicts, ss, n);
-    if (sources.size() != n)
-      return;
-
-    if (getDict(dicts, targetName) == nullptr) {
-      AvlDictionary *newDict = new AvlDictionary();
-      unionDictionaries(*newDict, sources);
-      dicts.pushFront(std::make_pair(targetName, newDict));
-      std::cout << "<UNION COMPLETED: " << targetName << ">\n";
-    }
-  }
-
-  void cmdIntersect(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string targetName;
-    std::size_t n;
-    ss >> targetName >> n;
-    pozdnyakov::Vector< const AvlDictionary * > sources = readDictList(dicts, ss, n);
-    if (sources.size() != n)
-      return;
-
-    if (getDict(dicts, targetName) == nullptr) {
-      AvlDictionary *newDict = new AvlDictionary();
-      intersectDictionaries(*newDict, sources);
-      dicts.pushFront(std::make_pair(targetName, newDict));
-      std::cout << "<INTERSECT COMPLETED: " << targetName << ">\n";
-    }
-  }
-
-  void cmdDiff(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string targetName;
-    std::size_t n;
-    ss >> targetName >> n;
-    pozdnyakov::Vector< const AvlDictionary * > sources = readDictList(dicts, ss, n);
-    if (sources.size() != n)
-      return;
-
-    if (getDict(dicts, targetName) == nullptr) {
-      AvlDictionary *newDict = new AvlDictionary();
-      if (n > 0) {
-        pozdnyakov::Vector< const AvlDictionary * > others;
-        for (std::size_t i = 1; i < sources.size(); ++i) {
-          others.pushBack(sources[i]);
-        }
-        diffDictionaries(*newDict, *sources[0], others);
-      }
-      dicts.pushFront(std::make_pair(targetName, newDict));
-      std::cout << "<DIFF COMPLETED: " << targetName << ">\n";
-    }
-  }
-
-  void cmdMerge(DictTable &dicts, std::istringstream &ss)
-  {
-    std::string targetName;
-    std::size_t n;
-    ss >> targetName >> n;
-    pozdnyakov::Vector< const AvlDictionary * > sources = readDictList(dicts, ss, n);
-    if (sources.size() != n)
-      return;
-
-    AvlDictionary *target = getDict(dicts, targetName);
-    if (target) {
-      mergeDictionaries(*target, sources);
-      std::cout << "<MERGED>\n";
-    }
   }
 
 }
