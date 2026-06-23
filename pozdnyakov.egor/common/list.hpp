@@ -40,7 +40,6 @@ namespace pozdnyakov
 
   template< class T >
   class List;
-
   template< class T >
   class LCIter;
 
@@ -72,7 +71,6 @@ namespace pozdnyakov
     {
       return static_cast< detail::Node< T > * >(ptr)->data;
     }
-
     pointer operator->() const
     {
       return &(static_cast< detail::Node< T > * >(ptr)->data);
@@ -88,18 +86,15 @@ namespace pozdnyakov
 
     LIter operator++(int)
     {
-      LIter temp = *this;
-      if (ptr) {
-        ptr = ptr->next;
-      }
-      return temp;
+      const LIter tmp = *this;
+      ++(*this);
+      return tmp;
     }
 
     bool operator==(const LIter &other) const
     {
       return ptr == other.ptr;
     }
-
     bool operator!=(const LIter &other) const
     {
       return ptr != other.ptr;
@@ -128,7 +123,6 @@ namespace pozdnyakov
     LCIter():
       ptr(nullptr)
     {}
-
     LCIter(const LIter< T > &other):
       ptr(other.ptr)
     {}
@@ -137,7 +131,6 @@ namespace pozdnyakov
     {
       return static_cast< const detail::Node< T > * >(ptr)->data;
     }
-
     pointer operator->() const
     {
       return &(static_cast< const detail::Node< T > * >(ptr)->data);
@@ -153,18 +146,15 @@ namespace pozdnyakov
 
     LCIter operator++(int)
     {
-      LCIter temp = *this;
-      if (ptr) {
-        ptr = ptr->next;
-      }
-      return temp;
+      const LCIter tmp = *this;
+      ++(*this);
+      return tmp;
     }
 
     bool operator==(const LCIter &other) const
     {
       return ptr == other.ptr;
     }
-
     bool operator!=(const LCIter &other) const
     {
       return ptr != other.ptr;
@@ -177,72 +167,179 @@ namespace pozdnyakov
   private:
     detail::BaseNode *fakeNode;
 
-    void makeCircular()
+    detail::BaseNode *getPrevious(const detail::BaseNode *node) const noexcept
     {
-      if (!fakeNode) {
-        return;
-      }
       detail::BaseNode *current = fakeNode;
-      while (current->next && current->next != fakeNode) {
+      while (current->next != node) {
         current = current->next;
       }
-      current->next = fakeNode;
+      return current;
+    }
+
+    void makeLinear() noexcept
+    {
+      if (!empty()) {
+        detail::BaseNode *tail = getPrevious(fakeNode);
+        tail->next = nullptr;
+      }
+    }
+
+    void makeCircular() noexcept
+    {
+      detail::BaseNode *tail = fakeNode;
+      while (tail->next) {
+        tail = tail->next;
+      }
+      tail->next = fakeNode;
+    }
+
+    template< class Compare >
+    detail::BaseNode *mergeLists(detail::BaseNode *first1, detail::BaseNode *first2, Compare comp) noexcept
+    {
+      detail::BaseNode dummy;
+      detail::BaseNode *current = &dummy;
+
+      while (first1 && first2) {
+        if (comp(static_cast< detail::Node< T > * >(first2)->data, static_cast< detail::Node< T > * >(first1)->data)) {
+          current->next = first2;
+          first2 = first2->next;
+        } else {
+          current->next = first1;
+          first1 = first1->next;
+        }
+        current = current->next;
+      }
+
+      current->next = first1 ? first1 : first2;
+      return dummy.next;
+    }
+
+    template< class Compare >
+    detail::BaseNode *mergeSort(detail::BaseNode *head, Compare comp) noexcept
+    {
+      if (!head || !head->next) {
+        return head;
+      }
+
+      detail::BaseNode *slow = head;
+      detail::BaseNode *fast = head->next;
+
+      while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+      }
+
+      detail::BaseNode *mid = slow->next;
+      slow->next = nullptr;
+
+      detail::BaseNode *left = mergeSort(head, comp);
+      detail::BaseNode *right = mergeSort(mid, comp);
+
+      return mergeLists(left, right, comp);
     }
 
   public:
-    List():
-      fakeNode(new detail::BaseNode())
+    List()
     {
+      fakeNode = new detail::BaseNode();
       fakeNode->next = fakeNode;
     }
 
-    List(const List &other):
-      fakeNode(new detail::BaseNode())
+    ~List() noexcept
     {
+      clear();
+      delete fakeNode;
+    }
+
+    List(const List &other)
+    {
+      fakeNode = new detail::BaseNode();
       fakeNode->next = fakeNode;
-      LIter< T > tail = end();
-      for (auto it = other.cbegin(); it != other.cend(); ++it) {
-        if (empty()) {
-          pushFront(*it);
-          tail = begin();
-        } else {
-          insertAfter(tail, *it);
-          ++tail;
+      if (other.empty()) {
+        return;
+      }
+
+      try {
+        for (auto it = other.cbegin(); it != other.cend(); ++it) {
+          pushBack(*it);
         }
+      } catch (...) {
+        clear();
+        delete fakeNode;
+        throw;
       }
     }
 
     List(List &&other) noexcept:
       fakeNode(other.fakeNode)
     {
-      other.fakeNode = new detail::BaseNode();
-      other.fakeNode->next = other.fakeNode;
+      other.fakeNode = nullptr;
     }
 
-    List &operator=(List other)
+    List &operator=(const List &other)
     {
-      std::swap(fakeNode, other.fakeNode);
+      if (this != &other) {
+        List tmp(other);
+        std::swap(fakeNode, tmp.fakeNode);
+      }
       return *this;
     }
 
-    ~List()
+    List &operator=(List &&other) noexcept
     {
-      clear();
-      delete fakeNode;
+      if (this != &other) {
+        clear();
+        delete fakeNode;
+        fakeNode = other.fakeNode;
+        other.fakeNode = nullptr;
+      }
+      return *this;
     }
 
-    void pushFront(const T &val)
+    void pushFront(const T &value)
     {
-      detail::Node< T > *newNode = new detail::Node< T >(val);
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
+      detail::Node< T > *newNode = new detail::Node< T >(value);
       newNode->next = fakeNode->next;
       fakeNode->next = newNode;
     }
 
-    void pushFront(T &&val)
+    void pushFront(T &&value)
     {
-      detail::Node< T > *newNode = new detail::Node< T >(std::move(val));
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
+      detail::Node< T > *newNode = new detail::Node< T >(std::move(value));
       newNode->next = fakeNode->next;
       fakeNode->next = newNode;
+    }
+
+    void pushBack(const T &value)
+    {
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
+      detail::BaseNode *tail = getPrevious(fakeNode);
+      detail::Node< T > *newNode = new detail::Node< T >(value);
+      newNode->next = fakeNode;
+      tail->next = newNode;
+    }
+
+    void pushBack(T &&value)
+    {
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
+      detail::BaseNode *tail = getPrevious(fakeNode);
+      detail::Node< T > *newNode = new detail::Node< T >(std::move(value));
+      newNode->next = fakeNode;
+      tail->next = newNode;
     }
 
     void popFront() noexcept
@@ -254,19 +351,10 @@ namespace pozdnyakov
       }
     }
 
-    void insertAfter(LIter< T > pos, const T &val)
+    void insertAfter(LIter< T > pos, const T &value)
     {
       if (pos.ptr) {
-        detail::Node< T > *newNode = new detail::Node< T >(val);
-        newNode->next = pos.ptr->next;
-        pos.ptr->next = newNode;
-      }
-    }
-
-    void insertAfter(LIter< T > pos, T &&val)
-    {
-      if (pos.ptr) {
-        detail::Node< T > *newNode = new detail::Node< T >(std::move(val));
+        detail::Node< T > *newNode = new detail::Node< T >(value);
         newNode->next = pos.ptr->next;
         pos.ptr->next = newNode;
       }
@@ -281,17 +369,112 @@ namespace pozdnyakov
       }
     }
 
-    template< class Predicate >
-    void remove_if(Predicate predicate)
+    void splice(LCIter< T > pos, List &other) noexcept
     {
-      detail::BaseNode dummyTrue{};
+      if (other.empty() || this == &other) {
+        return;
+      }
+      splice(pos, other, other.cbegin(), other.cend());
+    }
+
+    void splice(LCIter< T > pos, List &other, LCIter< T > it) noexcept
+    {
+      LCIter< T > nextIt = it;
+      ++nextIt;
+      splice(pos, other, it, nextIt);
+    }
+
+    void splice(LCIter< T > pos, List &other, LCIter< T > first, LCIter< T > last) noexcept
+    {
+      if (first == last || (this == &other && pos == first)) {
+        return;
+      }
+
+      detail::BaseNode *posPrev = getPrevious(pos.ptr);
+      detail::BaseNode *firstPrev = other.getPrevious(first.ptr);
+      detail::BaseNode *lastPrev = other.getPrevious(last.ptr);
+
+      detail::BaseNode *savedPosNext = posPrev->next;
+      firstPrev->next = const_cast< detail::BaseNode * >(last.ptr);
+
+      lastPrev->next = savedPosNext;
+      posPrev->next = const_cast< detail::BaseNode * >(first.ptr);
+    }
+
+    template< class Compare >
+    void merge(List &other, Compare comp) noexcept
+    {
+      if (this == &other || other.empty()) {
+        return;
+      }
+
+      makeLinear();
+      other.makeLinear();
+
+      detail::BaseNode *current = fakeNode;
+      detail::BaseNode *first1 = fakeNode->next;
+      detail::BaseNode *first2 = other.fakeNode->next;
+
+      while (first1 && first2) {
+        if (comp(static_cast< detail::Node< T > * >(first2)->data, static_cast< detail::Node< T > * >(first1)->data)) {
+          current->next = first2;
+          first2 = first2->next;
+        } else {
+          current->next = first1;
+          first1 = first1->next;
+        }
+        current = current->next;
+      }
+
+      current->next = first1 ? first1 : first2;
+      makeCircular();
+
+      other.fakeNode->next = other.fakeNode;
+    }
+
+    void merge(List &other) noexcept
+    {
+      merge(other, [](const T &a, const T &b) {
+        return a < b;
+      });
+    }
+
+    template< class Compare >
+    void sort(Compare comp) noexcept
+    {
+      if (empty() || fakeNode->next->next == fakeNode) {
+        return;
+      }
+
+      makeLinear();
+      fakeNode->next = mergeSort(fakeNode->next, comp);
+      makeCircular();
+    }
+
+    void sort() noexcept
+    {
+      sort([](const T &a, const T &b) {
+        return a < b;
+      });
+    }
+
+    template< class Predicate >
+    void partition(Predicate predicate) noexcept
+    {
+      if (empty()) {
+        return;
+      }
+
+      makeLinear();
+
+      detail::BaseNode dummyTrue;
       detail::BaseNode *trueTail = &dummyTrue;
 
-      detail::BaseNode dummyFalse{};
+      detail::BaseNode dummyFalse;
       detail::BaseNode *falseTail = &dummyFalse;
 
       detail::BaseNode *current = fakeNode->next;
-      while (current && current != fakeNode) {
+      while (current) {
         detail::BaseNode *nextNode = current->next;
         if (predicate(static_cast< detail::Node< T > * >(current)->data)) {
           trueTail->next = current;
@@ -306,11 +489,13 @@ namespace pozdnyakov
       trueTail->next = nullptr;
       falseTail->next = nullptr;
 
-      if (dummyFalse.next) {
+      if (dummyTrue.next) {
         trueTail->next = dummyFalse.next;
+        fakeNode->next = dummyTrue.next;
+      } else {
+        fakeNode->next = dummyFalse.next;
       }
 
-      fakeNode->next = dummyTrue.next ? dummyTrue.next : dummyFalse.next;
       makeCircular();
     }
 
@@ -330,7 +515,6 @@ namespace pozdnyakov
     {
       return static_cast< detail::Node< T > * >(fakeNode->next)->data;
     }
-
     const T &front() const
     {
       return static_cast< const detail::Node< T > * >(fakeNode->next)->data;
@@ -340,30 +524,17 @@ namespace pozdnyakov
     {
       return LIter< T >(fakeNode ? fakeNode->next : nullptr);
     }
-
     LIter< T > end()
     {
       return LIter< T >(fakeNode);
     }
-
     LCIter< T > cbegin() const
     {
       return LCIter< T >(fakeNode ? fakeNode->next : nullptr);
     }
-
     LCIter< T > cend() const
     {
       return LCIter< T >(fakeNode);
-    }
-
-    LCIter< T > begin() const
-    {
-      return cbegin();
-    }
-
-    LCIter< T > end() const
-    {
-      return cend();
     }
   };
 
