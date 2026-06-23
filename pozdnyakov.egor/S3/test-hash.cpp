@@ -47,20 +47,20 @@ BOOST_AUTO_TEST_CASE(collisionsAndUpdates)
   BOOST_CHECK_EQUAL(table.at("B"), 25);
 }
 
-BOOST_AUTO_TEST_CASE(dropAndExceptions)
+BOOST_AUTO_TEST_CASE(dropOperations)
 {
   HashTable< std::string, int, CollisionHash > table;
 
   table.add("X", 1);
   table.add("Y", 2);
 
-  int droppedVal = table.drop("X");
-  BOOST_CHECK_EQUAL(droppedVal, 1);
+  bool isDropped = table.drop("X");
+  BOOST_CHECK(isDropped);
   BOOST_CHECK_EQUAL(table.size(), 1);
   BOOST_CHECK(!table.has("X"));
   BOOST_CHECK(table.has("Y"));
 
-  BOOST_CHECK_THROW(table.drop("Z"), std::runtime_error);
+  BOOST_CHECK(!table.drop("Z"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
