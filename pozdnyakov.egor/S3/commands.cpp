@@ -5,6 +5,14 @@
 
 namespace pozdnyakov
 {
+  struct NodeEdgesComparator
+  {
+    bool operator()(const NodeEdges &a, const NodeEdges &b) const
+    {
+      return a.vertex < b.vertex;
+    }
+  };
+
   Graph *findGraph(Vector< std::pair< std::string, Graph > > &dict, const std::string &name)
   {
     for (std::size_t i = 0; i < dict.size(); ++i) {
@@ -81,9 +89,7 @@ namespace pozdnyakov
         return;
       }
 
-      std::sort(edges.begin(), edges.end(), [](const NodeEdges &a, const NodeEdges &b) {
-        return a.vertex < b.vertex;
-      });
+      std::sort(edges.begin(), edges.end(), NodeEdgesComparator());
       for (std::size_t i = 0; i < edges.size(); ++i) {
         std::cout << edges[i].vertex;
         Vector< unsigned int > w = edges[i].weights;
@@ -113,9 +119,7 @@ namespace pozdnyakov
         return;
       }
 
-      std::sort(edges.begin(), edges.end(), [](const NodeEdges &a, const NodeEdges &b) {
-        return a.vertex < b.vertex;
-      });
+      std::sort(edges.begin(), edges.end(), NodeEdgesComparator());
       for (std::size_t i = 0; i < edges.size(); ++i) {
         std::cout << edges[i].vertex;
         Vector< unsigned int > w = edges[i].weights;

@@ -135,34 +135,31 @@ namespace pozdnyakov
       ++size_;
     }
 
-    Value drop(Key k)
+    bool drop(const Key &k)
     {
       if (buckets_.size() == 0) {
-        throw std::runtime_error("Hash table is empty");
+        return false;
       }
 
       std::size_t idx = hashObj_(k) % buckets_.size();
 
       List< std::pair< Key, Value > > newList;
-      Value droppedVal;
       bool found = false;
 
       for (auto it = buckets_[idx].begin(); it != buckets_[idx].end(); ++it) {
         if (equalObj_((*it).first, k)) {
-          droppedVal = std::move((*it).second);
           found = true;
         } else {
           newList.pushFront(*it);
         }
       }
 
-      if (!found) {
-        throw std::runtime_error("Key not found");
+      if (found) {
+        buckets_[idx] = std::move(newList);
+        --size_;
       }
 
-      buckets_[idx] = std::move(newList);
-      --size_;
-      return droppedVal;
+      return found;
     }
 
     bool has(Key k)
