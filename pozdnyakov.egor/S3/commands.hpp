@@ -9,25 +9,15 @@
 namespace pozdnyakov
 {
   Graph *findGraph(Vector< std::pair< std::string, Graph > > &dict, const std::string &name);
-
   void printInvalid();
-
   void cmdGraphs(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdVertexes(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdOutbound(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdInbound(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdBind(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdCut(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdCreate(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdMerge(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
-
   void cmdExtract(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens);
 
   typedef void (*CommandFn)(Vector< std::pair< std::string, Graph > > &, const Vector< std::string > &);

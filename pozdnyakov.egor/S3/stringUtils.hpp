@@ -1,6 +1,7 @@
 #ifndef STRING_UTILS_HPP
 #define STRING_UTILS_HPP
 
+#include <cctype>
 #include <string>
 #include "vector.hpp"
 
@@ -28,7 +29,7 @@ namespace pozdnyakov
         return false;
       }
       for (char c : str) {
-        if (c < '0' || c > '9') {
+        if (!std::isdigit(static_cast< unsigned char >(c))) {
           return false;
         }
       }
