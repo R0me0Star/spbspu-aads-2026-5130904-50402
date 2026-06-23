@@ -21,7 +21,7 @@ namespace pozdnyakov
       virtual ~BaseNode() = default;
     };
 
-    template < class T >
+    template< class T >
     struct Node: BaseNode
     {
       T data;
@@ -38,13 +38,13 @@ namespace pozdnyakov
     };
   }
 
-  template < class T >
+  template< class T >
   class List;
 
-  template < class T >
+  template< class T >
   class LCIter;
 
-  template < class T >
+  template< class T >
   class LIter
   {
     friend class List< T >;
@@ -106,7 +106,7 @@ namespace pozdnyakov
     }
   };
 
-  template < class T >
+  template< class T >
   class LCIter
   {
     friend class List< T >;
@@ -171,7 +171,7 @@ namespace pozdnyakov
     }
   };
 
-  template < class T >
+  template< class T >
   class List
   {
   private:
@@ -281,7 +281,7 @@ namespace pozdnyakov
       }
     }
 
-    template < class Predicate >
+    template< class Predicate >
     void remove_if(Predicate predicate)
     {
       detail::BaseNode dummyTrue{};
