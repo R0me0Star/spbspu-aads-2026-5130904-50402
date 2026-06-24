@@ -40,7 +40,6 @@ namespace pozdnyakov
 
   template< class T >
   class List;
-
   template< class T >
   class LCIter;
 
@@ -80,21 +79,24 @@ namespace pozdnyakov
 
     LIter &operator++()
     {
-      ptr = ptr->next;
+      if (ptr) {
+        ptr = ptr->next;
+      }
       return *this;
     }
 
     LIter operator++(int)
     {
-      LIter temp = *this;
-      ptr = ptr->next;
-      return temp;
+      const LIter tmp = *this;
+      ++(*this);
+      return tmp;
     }
 
     bool operator==(const LIter &other) const
     {
       return ptr == other.ptr;
     }
+
     bool operator!=(const LIter &other) const
     {
       return ptr != other.ptr;
@@ -123,6 +125,7 @@ namespace pozdnyakov
     LCIter():
       ptr(nullptr)
     {}
+
     LCIter(const LIter< T > &other):
       ptr(other.ptr)
     {}
@@ -139,21 +142,24 @@ namespace pozdnyakov
 
     LCIter &operator++()
     {
-      ptr = ptr->next;
+      if (ptr) {
+        ptr = ptr->next;
+      }
       return *this;
     }
 
     LCIter operator++(int)
     {
-      LCIter temp = *this;
-      ptr = ptr->next;
-      return temp;
+      const LCIter tmp = *this;
+      ++(*this);
+      return tmp;
     }
 
     bool operator==(const LCIter &other) const
     {
       return ptr == other.ptr;
     }
+
     bool operator!=(const LCIter &other) const
     {
       return ptr != other.ptr;
@@ -166,6 +172,77 @@ namespace pozdnyakov
   private:
     detail::BaseNode *fakeNode;
 
+    detail::BaseNode *getPrevious(const detail::BaseNode *node) const noexcept
+    {
+      detail::BaseNode *current = fakeNode;
+      while (current->next != node) {
+        current = current->next;
+      }
+      return current;
+    }
+
+    void makeLinear() noexcept
+    {
+      if (!empty()) {
+        detail::BaseNode *tail = getPrevious(fakeNode);
+        tail->next = nullptr;
+      }
+    }
+
+    void makeCircular() noexcept
+    {
+      detail::BaseNode *tail = fakeNode;
+      while (tail->next) {
+        tail = tail->next;
+      }
+      tail->next = fakeNode;
+    }
+
+    template< class Compare >
+    detail::BaseNode *mergeLists(detail::BaseNode *first1, detail::BaseNode *first2, Compare comp) noexcept
+    {
+      detail::BaseNode dummy;
+      detail::BaseNode *current = &dummy;
+
+      while (first1 && first2) {
+        if (comp(static_cast< detail::Node< T > * >(first2)->data, static_cast< detail::Node< T > * >(first1)->data)) {
+          current->next = first2;
+          first2 = first2->next;
+        } else {
+          current->next = first1;
+          first1 = first1->next;
+        }
+        current = current->next;
+      }
+
+      current->next = first1 ? first1 : first2;
+      return dummy.next;
+    }
+
+    template< class Compare >
+    detail::BaseNode *mergeSort(detail::BaseNode *head, Compare comp) noexcept
+    {
+      if (!head || !head->next) {
+        return head;
+      }
+
+      detail::BaseNode *slow = head;
+      detail::BaseNode *fast = head->next;
+
+      while (fast && fast->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+      }
+
+      detail::BaseNode *mid = slow->next;
+      slow->next = nullptr;
+
+      detail::BaseNode *left = mergeSort(head, comp);
+      detail::BaseNode *right = mergeSort(mid, comp);
+
+      return mergeLists(left, right, comp);
+    }
+
   public:
     List()
     {
@@ -173,7 +250,7 @@ namespace pozdnyakov
       fakeNode->next = fakeNode;
     }
 
-    ~List()
+    ~List() noexcept
     {
       clear();
       delete fakeNode;
@@ -183,31 +260,38 @@ namespace pozdnyakov
     {
       fakeNode = new detail::BaseNode();
       fakeNode->next = fakeNode;
-      detail::BaseNode *tail = fakeNode;
-      detail::BaseNode *curr = other.fakeNode->next;
-      while (curr != other.fakeNode) {
-        detail::Node< T > *newNode = new detail::Node< T >(static_cast< detail::Node< T > * >(curr)->data);
-        tail->next = newNode;
-        tail = newNode;
-        curr = curr->next;
+      if (other.empty()) {
+        return;
       }
-      tail->next = fakeNode;
-    }
 
-    List &operator=(const List &other)
-    {
-      if (this != &other) {
-        List temp(other);
-        std::swap(fakeNode, temp.fakeNode);
+      try {
+        detail::BaseNode *tail = fakeNode;
+        for (auto it = other.cbegin(); it != other.cend(); ++it) {
+          detail::Node< T > *newNode = new detail::Node< T >(*it);
+          newNode->next = fakeNode;
+          tail->next = newNode;
+          tail = newNode;
+        }
+      } catch (...) {
+        clear();
+        delete fakeNode;
+        throw;
       }
-      return *this;
     }
 
     List(List &&other) noexcept:
       fakeNode(other.fakeNode)
     {
-      other.fakeNode = new detail::BaseNode();
-      other.fakeNode->next = other.fakeNode;
+      other.fakeNode = nullptr;
+    }
+
+    List &operator=(const List &other)
+    {
+      if (this != &other) {
+        List tmp(other);
+        std::swap(fakeNode, tmp.fakeNode);
+      }
+      return *this;
     }
 
     List &operator=(List &&other) noexcept
@@ -216,14 +300,17 @@ namespace pozdnyakov
         clear();
         delete fakeNode;
         fakeNode = other.fakeNode;
-        other.fakeNode = new detail::BaseNode();
-        other.fakeNode->next = other.fakeNode;
+        other.fakeNode = nullptr;
       }
       return *this;
     }
 
     void pushFront(const T &value)
     {
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
       detail::Node< T > *newNode = new detail::Node< T >(value);
       newNode->next = fakeNode->next;
       fakeNode->next = newNode;
@@ -231,65 +318,21 @@ namespace pozdnyakov
 
     void pushFront(T &&value)
     {
+      if (!fakeNode) {
+        fakeNode = new detail::BaseNode();
+        fakeNode->next = fakeNode;
+      }
       detail::Node< T > *newNode = new detail::Node< T >(std::move(value));
       newNode->next = fakeNode->next;
       fakeNode->next = newNode;
     }
 
-    void popFront()
+    void popFront() noexcept
     {
-      if (empty())
-        return;
-      detail::BaseNode *toDelete = fakeNode->next;
-      fakeNode->next = toDelete->next;
-      delete static_cast< detail::Node< T > * >(toDelete);
-    }
-
-    template< class Predicate >
-    void removeIf(Predicate predicate)
-    {
-      if (empty())
-        return;
-
-      detail::BaseNode dummyTrue;
-      detail::BaseNode dummyFalse;
-      detail::BaseNode *trueTail = &dummyTrue;
-      detail::BaseNode *falseTail = &dummyFalse;
-
-      detail::BaseNode *tail = fakeNode;
-      while (tail->next != fakeNode) {
-        tail = tail->next;
-      }
-      tail->next = nullptr;
-
-      detail::BaseNode *current = fakeNode->next;
-      while (current) {
-        detail::BaseNode *nextNode = current->next;
-        if (predicate(static_cast< detail::Node< T > * >(current)->data)) {
-          trueTail->next = current;
-          trueTail = current;
-        } else {
-          falseTail->next = current;
-          falseTail = current;
-        }
-        current = nextNode;
-      }
-
-      trueTail->next = nullptr;
-      falseTail->next = nullptr;
-
-      if (dummyFalse.next) {
-        fakeNode->next = dummyFalse.next;
-        falseTail->next = fakeNode;
-      } else {
-        fakeNode->next = fakeNode;
-      }
-
-      detail::BaseNode *toDelete = dummyTrue.next;
-      while (toDelete) {
-        detail::BaseNode *nextNode = toDelete->next;
-        delete static_cast< detail::Node< T > * >(toDelete);
-        toDelete = nextNode;
+      if (!empty()) {
+        detail::BaseNode *temp = fakeNode->next;
+        fakeNode->next = temp->next;
+        delete static_cast< detail::Node< T > * >(temp);
       }
     }
 
@@ -317,7 +360,7 @@ namespace pozdnyakov
 
     LIter< T > begin()
     {
-      return LIter< T >(fakeNode->next);
+      return LIter< T >(fakeNode ? fakeNode->next : nullptr);
     }
 
     LIter< T > end()
@@ -325,14 +368,139 @@ namespace pozdnyakov
       return LIter< T >(fakeNode);
     }
 
-    LCIter< T > begin() const
+    LCIter< T > cbegin() const
     {
-      return LCIter< T >(fakeNode->next);
+      return LCIter< T >(fakeNode ? fakeNode->next : nullptr);
     }
 
-    LCIter< T > end() const
+    LCIter< T > cend() const
     {
       return LCIter< T >(fakeNode);
+    }
+
+    void splice(LCIter< T > pos, List &other) noexcept
+    {
+      if (other.empty() || this == &other) {
+        return;
+      }
+      splice(pos, other, other.cbegin(), other.cend());
+    }
+
+    void splice(LCIter< T > pos, List &other, LCIter< T > it) noexcept
+    {
+      if (this == &other || it == other.cend()) {
+        return;
+      }
+      LCIter< T > nextIt = it;
+      ++nextIt;
+      splice(pos, other, it, nextIt);
+    }
+
+    void splice(LCIter< T > pos, List &other, LCIter< T > first, LCIter< T > last) noexcept
+    {
+      if (first == last || (this == &other && pos == first)) {
+        return;
+      }
+
+      detail::BaseNode *posPrev = getPrevious(pos.ptr);
+      detail::BaseNode *firstPrev = other.getPrevious(first.ptr);
+      detail::BaseNode *lastPrev = other.getPrevious(last.ptr);
+
+      detail::BaseNode *savedPosNext = posPrev->next;
+      firstPrev->next = const_cast< detail::BaseNode * >(last.ptr);
+
+      lastPrev->next = savedPosNext;
+      posPrev->next = const_cast< detail::BaseNode * >(first.ptr);
+    }
+
+    template< class Compare >
+    void merge(List &other, Compare comp) noexcept
+    {
+      if (this == &other || other.empty()) {
+        return;
+      }
+
+      makeLinear();
+      other.makeLinear();
+
+      detail::BaseNode *first1 = fakeNode->next;
+      detail::BaseNode *first2 = other.fakeNode->next;
+
+      fakeNode->next = mergeLists(first1, first2, comp);
+      makeCircular();
+
+      other.fakeNode->next = other.fakeNode;
+    }
+
+    void merge(List &other) noexcept
+    {
+      merge(other, [](const T &a, const T &b) {
+        return a < b;
+      });
+    }
+
+    template< class Compare >
+    void sort(Compare comp) noexcept
+    {
+      if (empty() || fakeNode->next->next == fakeNode) {
+        return;
+      }
+
+      makeLinear();
+      fakeNode->next = mergeSort(fakeNode->next, comp);
+      makeCircular();
+    }
+
+    void sort() noexcept
+    {
+      sort([](const T &a, const T &b) {
+        return a < b;
+      });
+    }
+
+    template< class Predicate >
+    void partition(Predicate predicate) noexcept
+    {
+      if (empty()) {
+        return;
+      }
+
+      makeLinear();
+
+      detail::BaseNode dummyTrue;
+      detail::BaseNode *trueTail = &dummyTrue;
+
+      detail::BaseNode dummyFalse;
+      detail::BaseNode *falseTail = &dummyFalse;
+
+      detail::BaseNode *current = fakeNode->next;
+      while (current) {
+        detail::BaseNode *nextNode = current->next;
+        if (predicate(static_cast< detail::Node< T > * >(current)->data)) {
+          trueTail->next = current;
+          trueTail = current;
+        } else {
+          falseTail->next = current;
+          falseTail = current;
+        }
+        current = nextNode;
+      }
+
+      trueTail->next = nullptr;
+      falseTail->next = nullptr;
+
+      if (dummyTrue.next) {
+        fakeNode->next = dummyTrue.next;
+        trueTail->next = dummyFalse.next;
+        if (dummyFalse.next) {
+          falseTail->next = fakeNode;
+        } else {
+          trueTail->next = fakeNode;
+        }
+      } else {
+        fakeNode->next = dummyFalse.next;
+        falseTail->next = fakeNode;
+      }
     }
   };
 
