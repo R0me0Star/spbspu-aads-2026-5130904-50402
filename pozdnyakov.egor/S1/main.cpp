@@ -1,44 +1,43 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <utility>
 #include "list.hpp"
 #include "process.hpp"
 
 int main()
 {
   try {
-    pozdnyakov::List< pozdnyakov::NamedSequence > sequences;
-    pozdnyakov::LIter< pozdnyakov::NamedSequence > sequenceTail = sequences.end();
-
+    pozdnyakov::List< pozdnyakov::NamedSequence > tempSequences;
     std::string name;
 
     while (std::cin >> name) {
-      if (sequences.empty()) {
-        sequences.pushFront({name, pozdnyakov::List< pozdnyakov::ValueType >()});
-        sequenceTail = sequences.begin();
-      } else {
-        sequences.insertAfter(sequenceTail, {name, pozdnyakov::List< pozdnyakov::ValueType >()});
-        ++sequenceTail;
-      }
-
-      pozdnyakov::LIter< pozdnyakov::ValueType > valueTail = sequenceTail->second.end();
+      pozdnyakov::List< pozdnyakov::ValueType > tempValues;
       pozdnyakov::ValueType value = 0;
 
       while (std::cin >> value) {
-        if (sequenceTail->second.empty()) {
-          sequenceTail->second.pushFront(value);
-          valueTail = sequenceTail->second.begin();
-        } else {
-          sequenceTail->second.insertAfter(valueTail, value);
-          ++valueTail;
-        }
+        tempValues.pushFront(value);
       }
+
+      if (!std::cin.eof()) {
+        std::cin.clear();
+      }
+
+      pozdnyakov::List< pozdnyakov::ValueType > values;
+      for (auto it = tempValues.begin(); it != tempValues.end(); ++it) {
+        values.pushFront(*it);
+      }
+
+      tempSequences.pushFront({name, std::move(values)});
 
       if (std::cin.eof()) {
         break;
       }
+    }
 
-      std::cin.clear();
+    pozdnyakov::List< pozdnyakov::NamedSequence > sequences;
+    for (auto it = tempSequences.begin(); it != tempSequences.end(); ++it) {
+      sequences.pushFront(std::move(*it));
     }
 
     if (sequences.empty()) {
@@ -47,7 +46,7 @@ int main()
     }
 
     bool firstName = true;
-    for (auto it = sequences.cbegin(); it != sequences.cend(); ++it) {
+    for (auto it = sequences.begin(); it != sequences.end(); ++it) {
       if (!firstName) {
         std::cout << " ";
       }
@@ -56,12 +55,11 @@ int main()
     }
     std::cout << "\n";
 
-    const pozdnyakov::List< pozdnyakov::List< pozdnyakov::ValueType > > rows =
-        pozdnyakov::buildInterleavedRows(sequences);
+    pozdnyakov::List< pozdnyakov::List< pozdnyakov::ValueType > > rows = pozdnyakov::buildInterleavedRows(sequences);
 
-    for (auto rowIterator = rows.cbegin(); rowIterator != rows.cend(); ++rowIterator) {
+    for (auto rowIterator = rows.begin(); rowIterator != rows.end(); ++rowIterator) {
       bool firstElement = true;
-      for (auto elementIterator = rowIterator->cbegin(); elementIterator != rowIterator->cend(); ++elementIterator) {
+      for (auto elementIterator = rowIterator->begin(); elementIterator != rowIterator->end(); ++elementIterator) {
         if (!firstElement) {
           std::cout << " ";
         }
@@ -71,13 +69,13 @@ int main()
       std::cout << "\n";
     }
 
-    const pozdnyakov::List< pozdnyakov::ValueType > sums = pozdnyakov::calculateSums(rows);
+    pozdnyakov::List< pozdnyakov::ValueType > sums = pozdnyakov::calculateSums(rows);
 
     if (sums.empty()) {
       std::cout << 0 << "\n";
     } else {
       bool firstSum = true;
-      for (auto sumIterator = sums.cbegin(); sumIterator != sums.cend(); ++sumIterator) {
+      for (auto sumIterator = sums.begin(); sumIterator != sums.end(); ++sumIterator) {
         if (!firstSum) {
           std::cout << " ";
         }

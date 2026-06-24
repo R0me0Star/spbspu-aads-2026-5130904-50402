@@ -5,37 +5,31 @@
 namespace pozdnyakov
 {
 
-  List< List< ValueType > > buildInterleavedRows(const List< NamedSequence > &sequences)
+  List< List< ValueType > > buildInterleavedRows(List< NamedSequence > &sequences)
   {
-    List< List< ValueType > > result;
+    List< LIter< ValueType > > tempIterators;
+    List< LIter< ValueType > > tempEndIterators;
 
-    List< LCIter< ValueType > > iterators;
-    List< LCIter< ValueType > > endIterators;
-
-    LIter< LCIter< ValueType > > iteratorsTail = iterators.end();
-    LIter< LCIter< ValueType > > endIteratorsTail = endIterators.end();
-
-    for (auto it = sequences.cbegin(); it != sequences.cend(); ++it) {
-      if (iterators.empty()) {
-        iterators.pushFront(it->second.cbegin());
-        endIterators.pushFront(it->second.cend());
-        iteratorsTail = iterators.begin();
-        endIteratorsTail = endIterators.begin();
-      } else {
-        iterators.insertAfter(iteratorsTail, it->second.cbegin());
-        endIterators.insertAfter(endIteratorsTail, it->second.cend());
-        ++iteratorsTail;
-        ++endIteratorsTail;
-      }
+    for (auto it = sequences.begin(); it != sequences.end(); ++it) {
+      tempIterators.pushFront(it->second.begin());
+      tempEndIterators.pushFront(it->second.end());
     }
 
-    LIter< List< ValueType > > rowsTail = result.end();
+    List< LIter< ValueType > > iterators;
+    List< LIter< ValueType > > endIterators;
+
+    for (auto it = tempIterators.begin(); it != tempIterators.end(); ++it) {
+      iterators.pushFront(*it);
+    }
+    for (auto it = tempEndIterators.begin(); it != tempEndIterators.end(); ++it) {
+      endIterators.pushFront(*it);
+    }
+
+    List< List< ValueType > > tempRows;
 
     while (true) {
       bool elementsLeft = false;
-
-      List< ValueType > currentRow;
-      LIter< ValueType > currentRowTail = currentRow.end();
+      List< ValueType > tempRow;
 
       auto it = iterators.begin();
       auto endIt = endIterators.begin();
@@ -44,15 +38,7 @@ namespace pozdnyakov
         if (*it != *endIt) {
           elementsLeft = true;
           const ValueType value = *(*it);
-
-          if (currentRow.empty()) {
-            currentRow.pushFront(value);
-            currentRowTail = currentRow.begin();
-          } else {
-            currentRow.insertAfter(currentRowTail, value);
-            ++currentRowTail;
-          }
-
+          tempRow.pushFront(value);
           ++(*it);
         }
       }
@@ -61,27 +47,29 @@ namespace pozdnyakov
         break;
       }
 
-      if (result.empty()) {
-        result.pushFront(currentRow);
-        rowsTail = result.begin();
-      } else {
-        result.insertAfter(rowsTail, currentRow);
-        ++rowsTail;
+      List< ValueType > row;
+      for (auto rIt = tempRow.begin(); rIt != tempRow.end(); ++rIt) {
+        row.pushFront(*rIt);
       }
+      tempRows.pushFront(std::move(row));
     }
 
-    return result;
+    List< List< ValueType > > rows;
+    for (auto rIt = tempRows.begin(); rIt != tempRows.end(); ++rIt) {
+      rows.pushFront(std::move(*rIt));
+    }
+
+    return rows;
   }
 
-  List< ValueType > calculateSums(const List< List< ValueType > > &rows)
+  List< ValueType > calculateSums(List< List< ValueType > > &rows)
   {
-    List< ValueType > sums;
-    LIter< ValueType > sumsTail = sums.end();
+    List< ValueType > tempSums;
 
-    for (auto rowIterator = rows.cbegin(); rowIterator != rows.cend(); ++rowIterator) {
+    for (auto rowIterator = rows.begin(); rowIterator != rows.end(); ++rowIterator) {
       ValueType currentRowSum = 0;
 
-      for (auto elementIterator = rowIterator->cbegin(); elementIterator != rowIterator->cend(); ++elementIterator) {
+      for (auto elementIterator = rowIterator->begin(); elementIterator != rowIterator->end(); ++elementIterator) {
         const ValueType value = *elementIterator;
         if (currentRowSum > std::numeric_limits< ValueType >::max() - value) {
           throw std::overflow_error("Sum calculation overflow");
@@ -89,13 +77,12 @@ namespace pozdnyakov
         currentRowSum += value;
       }
 
-      if (sums.empty()) {
-        sums.pushFront(currentRowSum);
-        sumsTail = sums.begin();
-      } else {
-        sums.insertAfter(sumsTail, currentRowSum);
-        ++sumsTail;
-      }
+      tempSums.pushFront(currentRowSum);
+    }
+
+    List< ValueType > sums;
+    for (auto sIt = tempSums.begin(); sIt != tempSums.end(); ++sIt) {
+      sums.pushFront(*sIt);
     }
 
     return sums;

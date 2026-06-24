@@ -10,15 +10,8 @@ using namespace pozdnyakov;
 List< ValueType > makeList(const ValueType *values, std::size_t size)
 {
   List< ValueType > list;
-  LIter< ValueType > tail = list.end();
-  for (std::size_t i = 0; i < size; ++i) {
-    if (list.empty()) {
-      list.pushFront(values[i]);
-      tail = list.begin();
-    } else {
-      list.insertAfter(tail, values[i]);
-      ++tail;
-    }
+  for (std::size_t i = size; i > 0; --i) {
+    list.pushFront(values[i - 1]);
   }
   return list;
 }
@@ -29,8 +22,8 @@ BOOST_AUTO_TEST_CASE(testEmptySequences)
 {
   List< NamedSequence > sequences;
 
-  const List< List< ValueType > > rows = buildInterleavedRows(sequences);
-  const List< ValueType > sums = calculateSums(rows);
+  List< List< ValueType > > rows = buildInterleavedRows(sequences);
+  List< ValueType > sums = calculateSums(rows);
 
   BOOST_CHECK(rows.empty());
   BOOST_CHECK(sums.empty());
@@ -42,8 +35,8 @@ BOOST_AUTO_TEST_CASE(testSequencesWithoutNumbers)
   sequences.pushFront({"second", List< ValueType >()});
   sequences.pushFront({"first", List< ValueType >()});
 
-  const List< List< ValueType > > rows = buildInterleavedRows(sequences);
-  const List< ValueType > sums = calculateSums(rows);
+  List< List< ValueType > > rows = buildInterleavedRows(sequences);
+  List< ValueType > sums = calculateSums(rows);
 
   BOOST_CHECK(rows.empty());
   BOOST_CHECK(sums.empty());
@@ -55,12 +48,12 @@ BOOST_AUTO_TEST_CASE(testSingleSequence)
   const ValueType values[] = {10, 20};
   sequences.pushFront({"single", makeList(values, 2)});
 
-  const List< List< ValueType > > rows = buildInterleavedRows(sequences);
-  const List< ValueType > sums = calculateSums(rows);
+  List< List< ValueType > > rows = buildInterleavedRows(sequences);
+  List< ValueType > sums = calculateSums(rows);
 
   const ValueType expectedSums[] = {10, 20};
   int i = 0;
-  for (auto it = sums.cbegin(); it != sums.cend(); ++it) {
+  for (auto it = sums.begin(); it != sums.end(); ++it) {
     BOOST_CHECK_EQUAL(*it, expectedSums[i++]);
   }
   BOOST_CHECK_EQUAL(i, 2);
@@ -76,7 +69,7 @@ BOOST_AUTO_TEST_CASE(testProcessLogicOverflow)
   const ValueType value1[] = {std::numeric_limits< ValueType >::max()};
   sequences.pushFront({"list1", makeList(value1, 1)});
 
-  const List< List< ValueType > > rows = buildInterleavedRows(sequences);
+  List< List< ValueType > > rows = buildInterleavedRows(sequences);
   BOOST_CHECK_THROW(calculateSums(rows), std::overflow_error);
 }
 

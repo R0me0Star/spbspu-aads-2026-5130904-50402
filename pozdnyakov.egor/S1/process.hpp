@@ -9,11 +9,11 @@
 namespace pozdnyakov
 {
 
-  using ValueType = std::size_t;
+  using ValueType = size_t;
   using NamedSequence = std::pair< std::string, List< ValueType > >;
 
-  List< List< ValueType > > buildInterleavedRows(const List< NamedSequence > &sequences);
-  List< ValueType > calculateSums(const List< List< ValueType > > &rows);
+  List< List< ValueType > > buildInterleavedRows(List< NamedSequence > &sequences);
+  List< ValueType > calculateSums(List< List< ValueType > > &rows);
 
 }
 
