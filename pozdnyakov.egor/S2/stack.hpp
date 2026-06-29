@@ -1,12 +1,12 @@
 #ifndef STACK_HPP
 #define STACK_HPP
 
-#include "../common/list.hpp"
 #include <utility>
+#include "../common/list.hpp"
 
 namespace pozdnyakov
 {
-  template < class T >
+  template< class T >
   class Stack
   {
   private:
@@ -25,6 +25,12 @@ namespace pozdnyakov
     void push(T &&val)
     {
       container_.pushFront(std::move(val));
+    }
+
+    template< class... Args >
+    void emplace(Args &&...args)
+    {
+      container_.emplaceFront(std::forward< Args >(args)...);
     }
 
     void pop()

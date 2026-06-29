@@ -3,6 +3,17 @@
 
 using namespace pozdnyakov;
 
+struct EmplaceTarget
+{
+  int x;
+  int y;
+
+  EmplaceTarget(int a, int b):
+    x(a),
+    y(b)
+  {}
+};
+
 BOOST_AUTO_TEST_SUITE(QueueTests)
 
 BOOST_AUTO_TEST_CASE(testFifoBehavior)
@@ -41,6 +52,22 @@ BOOST_AUTO_TEST_CASE(testCompilerGeneratedCopying)
   copied.pop();
   copied.pop();
   BOOST_CHECK_EQUAL(copied.front(), 3);
+}
+
+BOOST_AUTO_TEST_CASE(testEmplacePerfectForwarding)
+{
+  Queue< EmplaceTarget > queue{};
+
+  queue.emplace(10, 20);
+  queue.emplace(30, 40);
+
+  BOOST_CHECK(!queue.empty());
+  BOOST_CHECK_EQUAL(queue.front().x, 10);
+  BOOST_CHECK_EQUAL(queue.front().y, 20);
+
+  queue.pop();
+  BOOST_CHECK_EQUAL(queue.front().x, 30);
+  BOOST_CHECK_EQUAL(queue.front().y, 40);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

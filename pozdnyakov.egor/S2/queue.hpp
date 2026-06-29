@@ -1,14 +1,14 @@
 #ifndef QUEUE_HPP
 #define QUEUE_HPP
 
-#include "../common/list.hpp"
+#include <cstddef>
 #include <iterator>
 #include <utility>
-#include <cstddef>
+#include "../common/list.hpp"
 
 namespace pozdnyakov
 {
-  template < class T >
+  template< class T >
   class Queue
   {
   private:
@@ -41,6 +41,19 @@ namespace pozdnyakov
         LIter< T > tailIter = container_.begin();
         std::advance(tailIter, size_ - 1);
         container_.insertAfter(tailIter, std::move(val));
+      }
+      ++size_;
+    }
+
+    template< class... Args >
+    void emplace(Args &&...args)
+    {
+      if (empty()) {
+        container_.emplaceFront(std::forward< Args >(args)...);
+      } else {
+        LIter< T > tailIter = container_.begin();
+        std::advance(tailIter, size_ - 1);
+        container_.emplaceAfter(tailIter, std::forward< Args >(args)...);
       }
       ++size_;
     }
