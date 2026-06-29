@@ -8,36 +8,26 @@
 int main()
 {
   try {
-    pozdnyakov::List< pozdnyakov::NamedSequence > tempSequences;
+    pozdnyakov::List< pozdnyakov::NamedSequence > sequences;
     std::string name;
 
     while (std::cin >> name) {
-      pozdnyakov::List< pozdnyakov::ValueType > tempValues;
+      pozdnyakov::List< pozdnyakov::ValueType > values;
       pozdnyakov::ValueType value = 0;
 
       while (std::cin >> value) {
-        tempValues.pushFront(value);
+        values.pushBack(value);
       }
 
       if (!std::cin.eof()) {
         std::cin.clear();
       }
 
-      pozdnyakov::List< pozdnyakov::ValueType > values;
-      for (auto it = tempValues.begin(); it != tempValues.end(); ++it) {
-        values.pushFront(*it);
-      }
-
-      tempSequences.pushFront({name, std::move(values)});
+      sequences.pushBack({name, std::move(values)});
 
       if (std::cin.eof()) {
         break;
       }
-    }
-
-    pozdnyakov::List< pozdnyakov::NamedSequence > sequences;
-    for (auto it = tempSequences.begin(); it != tempSequences.end(); ++it) {
-      sequences.pushFront(std::move(*it));
     }
 
     if (sequences.empty()) {
@@ -45,26 +35,27 @@ int main()
       return 0;
     }
 
-    bool firstName = true;
+    bool first = true;
     for (auto it = sequences.begin(); it != sequences.end(); ++it) {
-      if (!firstName) {
+      if (!first) {
         std::cout << " ";
       }
       std::cout << it->first;
-      firstName = false;
+      first = false;
     }
     std::cout << "\n";
 
-    pozdnyakov::List< pozdnyakov::List< pozdnyakov::ValueType > > rows = pozdnyakov::buildInterleavedRows(sequences);
+    pozdnyakov::List< pozdnyakov::List< pozdnyakov::ValueType > > rows =
+      pozdnyakov::buildInterleavedRows(sequences);
 
-    for (auto rowIterator = rows.begin(); rowIterator != rows.end(); ++rowIterator) {
-      bool firstElement = true;
-      for (auto elementIterator = rowIterator->begin(); elementIterator != rowIterator->end(); ++elementIterator) {
-        if (!firstElement) {
+    for (auto rowIt = rows.begin(); rowIt != rows.end(); ++rowIt) {
+      bool firstElem = true;
+      for (auto elemIt = rowIt->begin(); elemIt != rowIt->end(); ++elemIt) {
+        if (!firstElem) {
           std::cout << " ";
         }
-        std::cout << *elementIterator;
-        firstElement = false;
+        std::cout << *elemIt;
+        firstElem = false;
       }
       std::cout << "\n";
     }
@@ -75,18 +66,18 @@ int main()
       std::cout << 0 << "\n";
     } else {
       bool firstSum = true;
-      for (auto sumIterator = sums.begin(); sumIterator != sums.end(); ++sumIterator) {
+      for (auto sumIt = sums.begin(); sumIt != sums.end(); ++sumIt) {
         if (!firstSum) {
           std::cout << " ";
         }
-        std::cout << *sumIterator;
+        std::cout << *sumIt;
         firstSum = false;
       }
       std::cout << "\n";
     }
 
   } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    std::cerr << "Error: " << e.what() << "\n";
     return 1;
   }
 

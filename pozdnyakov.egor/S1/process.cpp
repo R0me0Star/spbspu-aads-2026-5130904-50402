@@ -7,29 +7,19 @@ namespace pozdnyakov
 
   List< List< ValueType > > buildInterleavedRows(List< NamedSequence > &sequences)
   {
-    List< LIter< ValueType > > tempIterators;
-    List< LIter< ValueType > > tempEndIterators;
-
-    for (auto it = sequences.begin(); it != sequences.end(); ++it) {
-      tempIterators.pushFront(it->second.begin());
-      tempEndIterators.pushFront(it->second.end());
-    }
-
     List< LIter< ValueType > > iterators;
     List< LIter< ValueType > > endIterators;
 
-    for (auto it = tempIterators.begin(); it != tempIterators.end(); ++it) {
-      iterators.pushFront(*it);
-    }
-    for (auto it = tempEndIterators.begin(); it != tempEndIterators.end(); ++it) {
-      endIterators.pushFront(*it);
+    for (auto it = sequences.begin(); it != sequences.end(); ++it) {
+      iterators.pushBack(it->second.begin());
+      endIterators.pushBack(it->second.end());
     }
 
-    List< List< ValueType > > tempRows;
+    List< List< ValueType > > rows;
 
     while (true) {
       bool elementsLeft = false;
-      List< ValueType > tempRow;
+      List< ValueType > row;
 
       auto it = iterators.begin();
       auto endIt = endIterators.begin();
@@ -37,8 +27,7 @@ namespace pozdnyakov
       for (; it != iterators.end() && endIt != endIterators.end(); ++it, ++endIt) {
         if (*it != *endIt) {
           elementsLeft = true;
-          const ValueType value = *(*it);
-          tempRow.pushFront(value);
+          row.pushBack(*(*it));
           ++(*it);
         }
       }
@@ -47,16 +36,7 @@ namespace pozdnyakov
         break;
       }
 
-      List< ValueType > row;
-      for (auto rIt = tempRow.begin(); rIt != tempRow.end(); ++rIt) {
-        row.pushFront(*rIt);
-      }
-      tempRows.pushFront(std::move(row));
-    }
-
-    List< List< ValueType > > rows;
-    for (auto rIt = tempRows.begin(); rIt != tempRows.end(); ++rIt) {
-      rows.pushFront(std::move(*rIt));
+      rows.pushBack(std::move(row));
     }
 
     return rows;
@@ -64,25 +44,20 @@ namespace pozdnyakov
 
   List< ValueType > calculateSums(List< List< ValueType > > &rows)
   {
-    List< ValueType > tempSums;
+    List< ValueType > sums;
 
-    for (auto rowIterator = rows.begin(); rowIterator != rows.end(); ++rowIterator) {
-      ValueType currentRowSum = 0;
+    for (auto rowIt = rows.begin(); rowIt != rows.end(); ++rowIt) {
+      ValueType sum = 0;
 
-      for (auto elementIterator = rowIterator->begin(); elementIterator != rowIterator->end(); ++elementIterator) {
-        const ValueType value = *elementIterator;
-        if (currentRowSum > std::numeric_limits< ValueType >::max() - value) {
+      for (auto elemIt = rowIt->begin(); elemIt != rowIt->end(); ++elemIt) {
+        const ValueType value = *elemIt;
+        if (sum > std::numeric_limits< ValueType >::max() - value) {
           throw std::overflow_error("Sum calculation overflow");
         }
-        currentRowSum += value;
+        sum += value;
       }
 
-      tempSums.pushFront(currentRowSum);
-    }
-
-    List< ValueType > sums;
-    for (auto sIt = tempSums.begin(); sIt != tempSums.end(); ++sIt) {
-      sums.pushFront(*sIt);
+      sums.pushBack(sum);
     }
 
     return sums;
