@@ -1,10 +1,10 @@
+#include "calculator.hpp"
+#include "stack.hpp"
 #include <cctype>
 #include <exception>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include "calculator.hpp"
-#include "stack.hpp"
 
 int main(const int argc, char *argv[])
 {
@@ -14,12 +14,12 @@ int main(const int argc, char *argv[])
   if (argc == 2) {
     fileStream.open(argv[1]);
     if (!fileStream.is_open()) {
-      std::cerr << "Error: Could not open file\n";
+      std::cerr << "Could not open file\n";
       return 1;
     }
     input = &fileStream;
   } else if (argc > 2) {
-    std::cerr << "Error: Too many arguments\n";
+    std::cerr << "Too many arguments\n";
     return 1;
   }
 
@@ -27,8 +27,8 @@ int main(const int argc, char *argv[])
   std::string line{};
 
   while (std::getline(*input, line)) {
-    bool isEmpty = true;
-    for (size_t i = 0; i < line.length(); ++i) {
+    bool isEmpty{true};
+    for (std::size_t i = 0; i < line.length(); ++i) {
       if (!std::isspace(static_cast< unsigned char >(line[i]))) {
         isEmpty = false;
         break;
@@ -48,7 +48,7 @@ int main(const int argc, char *argv[])
     }
   }
 
-  bool isFirst = true;
+  bool isFirst{true};
   while (!results.empty()) {
     if (!isFirst) {
       std::cout << " ";

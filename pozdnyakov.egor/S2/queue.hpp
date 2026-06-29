@@ -1,34 +1,34 @@
 #ifndef QUEUE_HPP
 #define QUEUE_HPP
 
+#include "../common/list.hpp"
 #include <iterator>
 #include <utility>
-#include "list.hpp"
+#include <cstddef>
 
 namespace pozdnyakov
 {
-
   template < class T >
   class Queue
   {
   private:
-    List< T > container{};
+    List< T > container_{};
     std::size_t size_{0};
 
   public:
     Queue():
-      container(),
+      container_(),
       size_(0)
     {}
 
     void push(const T &val)
     {
       if (empty()) {
-        container.pushFront(val);
+        container_.pushFront(val);
       } else {
-        LIter< T > tailIter = container.begin();
+        LIter< T > tailIter = container_.begin();
         std::advance(tailIter, size_ - 1);
-        container.insertAfter(tailIter, val);
+        container_.insertAfter(tailIter, val);
       }
       ++size_;
     }
@@ -36,11 +36,11 @@ namespace pozdnyakov
     void push(T &&val)
     {
       if (empty()) {
-        container.pushFront(std::move(val));
+        container_.pushFront(std::move(val));
       } else {
-        LIter< T > tailIter = container.begin();
+        LIter< T > tailIter = container_.begin();
         std::advance(tailIter, size_ - 1);
-        container.insertAfter(tailIter, std::move(val));
+        container_.insertAfter(tailIter, std::move(val));
       }
       ++size_;
     }
@@ -48,19 +48,19 @@ namespace pozdnyakov
     void pop()
     {
       if (!empty()) {
-        container.popFront();
+        container_.popFront();
         --size_;
       }
     }
 
     T &front()
     {
-      return container.front();
+      return container_.front();
     }
 
     const T &front() const
     {
-      return container.front();
+      return container_.front();
     }
 
     bool empty() const noexcept
@@ -68,7 +68,6 @@ namespace pozdnyakov
       return size_ == 0;
     }
   };
-
 }
 
 #endif

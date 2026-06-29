@@ -1,61 +1,59 @@
 #ifndef STACK_HPP
 #define STACK_HPP
 
+#include "../common/list.hpp"
 #include <utility>
-#include "list.hpp"
 
 namespace pozdnyakov
 {
-
   template < class T >
   class Stack
   {
   private:
-    List< T > container{};
+    List< T > container_{};
 
   public:
     Stack():
-      container()
+      container_()
     {}
 
     void push(const T &val)
     {
-      container.pushFront(val);
+      container_.pushFront(val);
     }
 
     void push(T &&val)
     {
-      container.pushFront(std::move(val));
+      container_.pushFront(std::move(val));
     }
 
     void pop()
     {
       if (!empty()) {
-        container.popFront();
+        container_.popFront();
       }
     }
 
     T &top()
     {
-      return container.front();
+      return container_.front();
     }
 
     const T &top() const
     {
-      return container.front();
+      return container_.front();
     }
 
     bool empty() const noexcept
     {
-      return container.empty();
+      return container_.empty();
     }
 
     void clear() noexcept
     {
-      container.clear();
+      container_.clear();
     }
   };
-
 }
 
 #endif

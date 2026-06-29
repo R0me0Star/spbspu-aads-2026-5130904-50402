@@ -1,9 +1,9 @@
 #include "calculator.hpp"
+#include "queue.hpp"
+#include "stack.hpp"
 #include <cctype>
 #include <limits>
 #include <stdexcept>
-#include "queue.hpp"
-#include "stack.hpp"
 
 namespace pozdnyakov
 {
@@ -80,7 +80,8 @@ namespace pozdnyakov
     }
   }
 
-  enum class TokenType {
+  enum class TokenType
+  {
     Number,
     Operator,
     LParen,
@@ -118,7 +119,7 @@ namespace pozdnyakov
   Queue< Token > tokenize(const std::string &expr)
   {
     Queue< Token > tokens{};
-    size_t i = 0;
+    std::size_t i{0};
 
     while (i < expr.length()) {
       if (std::isspace(static_cast< unsigned char >(expr[i]))) {
@@ -127,7 +128,7 @@ namespace pozdnyakov
       }
 
       if (std::isdigit(static_cast< unsigned char >(expr[i]))) {
-        long long val = 0;
+        long long val{0};
         while (i < expr.length() && std::isdigit(static_cast< unsigned char >(expr[i]))) {
           const int digit = expr[i] - '0';
 
@@ -145,8 +146,7 @@ namespace pozdnyakov
       } else if (expr[i] == ')') {
         tokens.push(Token(TokenType::RParen, 0, '\0'));
         ++i;
-      } else if (expr[i] == '+' || expr[i] == '-' || expr[i] == '*' || expr[i] == '/' || expr[i] == '%'
-                 || expr[i] == '&') {
+      } else if (expr[i] == '+' || expr[i] == '-' || expr[i] == '*' || expr[i] == '/' || expr[i] == '%' || expr[i] == '&') {
         tokens.push(Token(TokenType::Operator, 0, expr[i]));
         ++i;
       } else {
@@ -179,8 +179,8 @@ namespace pozdnyakov
         }
         operators.pop();
       } else if (token.type == TokenType::Operator) {
-        while (!operators.empty() && operators.top().type == TokenType::Operator
-               && getPrecedence(operators.top().op) >= getPrecedence(token.op)) {
+        while (!operators.empty() && operators.top().type == TokenType::Operator &&
+               getPrecedence(operators.top().op) >= getPrecedence(token.op)) {
           postfix.push(operators.top());
           operators.pop();
         }
@@ -226,7 +226,7 @@ namespace pozdnyakov
         const long long left = values.top();
         values.pop();
 
-        long long result = 0;
+        long long result{0};
         switch (token.op) {
         case '+':
           result = safeAdd(left, right);
