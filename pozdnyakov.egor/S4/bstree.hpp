@@ -6,7 +6,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include "bstiterators.hpp"
 
 namespace pozdnyakov
 {
@@ -21,18 +20,27 @@ namespace pozdnyakov
       TreeNode *parent;
       TreeNode *left;
       TreeNode *right;
+      int height;
 
       TreeNode(const Key &initKey, const Value &initValue, TreeNode *parentNode = nullptr):
         key(initKey),
         value(initValue),
         parent(parentNode),
         left(nullptr),
-        right(nullptr)
+        right(nullptr),
+        height(1)
       {}
     };
   }
 
-  template< class Key, class Value, class Compare = std::less< Key > >
+}
+
+#include "bstiterators.hpp"
+
+namespace pozdnyakov
+{
+
+  template< class Key, class Value, class Compare = std::less< Key >, bool AllowDuplicates = false >
   class BSTree
   {
   public:
@@ -43,6 +51,92 @@ namespace pozdnyakov
     using Node = detail::TreeNode< Key, Value >;
     Node *root;
     Compare comparator;
+
+    int getNodeHeight(Node *node) const
+    {
+      return node ? node->height : 0;
+    }
+
+    int getBalanceFactor(Node *node) const
+    {
+      return node ? getNodeHeight(node->right) - getNodeHeight(node->left) : 0;
+    }
+
+    void fixHeight(Node *node)
+    {
+      if (!node) {
+        return;
+      }
+      const int hl = getNodeHeight(node->left);
+      const int hr = getNodeHeight(node->right);
+      node->height = (hl > hr ? hl : hr) + 1;
+    }
+
+    Node *rotateRight(Node *p)
+    {
+      Node *q = p->left;
+      p->left = q->right;
+      if (q->right) {
+        q->right->parent = p;
+      }
+      q->right = p;
+      q->parent = p->parent;
+      p->parent = q;
+      fixHeight(p);
+      fixHeight(q);
+      return q;
+    }
+
+    Node *rotateLeft(Node *q)
+    {
+      Node *p = q->right;
+      q->right = p->left;
+      if (p->left) {
+        p->left->parent = q;
+      }
+      p->left = q;
+      p->parent = q->parent;
+      q->parent = p;
+      fixHeight(q);
+      fixHeight(p);
+      return p;
+    }
+
+    Node *balanceNode(Node *p)
+    {
+      fixHeight(p);
+      if (getBalanceFactor(p) == 2) {
+        if (getBalanceFactor(p->right) < 0) {
+          p->right = rotateRight(p->right);
+        }
+        return rotateLeft(p);
+      }
+      if (getBalanceFactor(p) == -2) {
+        if (getBalanceFactor(p->left) > 0) {
+          p->left = rotateLeft(p->left);
+        }
+        return rotateRight(p);
+      }
+      return p;
+    }
+
+    void balanceUp(Node *curr)
+    {
+      while (curr) {
+        Node *parent = curr->parent;
+        Node *newSubRoot = balanceNode(curr);
+        if (parent) {
+          if (parent->left == curr) {
+            parent->left = newSubRoot;
+          } else {
+            parent->right = newSubRoot;
+          }
+        } else {
+          root = newSubRoot;
+        }
+        curr = parent;
+      }
+    }
 
     void clear(Node *node)
     {
@@ -59,19 +153,10 @@ namespace pozdnyakov
         return nullptr;
       }
       Node *newNode = new Node(node->key, node->value, parentNode);
+      newNode->height = node->height;
       newNode->left = copyTree(node->left, newNode);
       newNode->right = copyTree(node->right, newNode);
       return newNode;
-    }
-
-    size_t calculateHeight(const Node *node) const
-    {
-      if (!node) {
-        return 0;
-      }
-      const size_t leftHeight = calculateHeight(node->left);
-      const size_t rightHeight = calculateHeight(node->right);
-      return 1 + std::max(leftHeight, rightHeight);
     }
 
     void replaceNodeInParent(Node *oldNode, Node *newNode)
@@ -92,6 +177,8 @@ namespace pozdnyakov
 
     void removeNode(Node *node)
     {
+      Node *balanceStart = nullptr;
+
       if (node->left && node->right) {
         Node *successor = node->right;
         while (successor->left) {
@@ -99,16 +186,26 @@ namespace pozdnyakov
         }
         node->key = successor->key;
         node->value = successor->value;
-        removeNode(successor);
+
+        balanceStart = successor->parent;
+        replaceNodeInParent(successor, successor->right);
+        delete successor;
       } else if (node->left) {
+        balanceStart = node->parent;
         replaceNodeInParent(node, node->left);
         delete node;
       } else if (node->right) {
+        balanceStart = node->parent;
         replaceNodeInParent(node, node->right);
         delete node;
       } else {
+        balanceStart = node->parent;
         replaceNodeInParent(node, nullptr);
         delete node;
+      }
+
+      if (balanceStart) {
+        balanceUp(balanceStart);
       }
     }
 
@@ -169,16 +266,23 @@ namespace pozdnyakov
         } else if (comparator(current->key, key)) {
           current = current->right;
         } else {
-          current->value = value;
-          return;
+          if (AllowDuplicates) {
+            current = current->right;
+          } else {
+            current->value = value;
+            return;
+          }
         }
       }
       Node *newNode = new Node(key, value, parent);
       if (comparator(key, parent->key)) {
         parent->left = newNode;
+      } else if (comparator(parent->key, key)) {
+        parent->right = newNode;
       } else {
         parent->right = newNode;
       }
+      balanceUp(parent);
     }
 
     Value &get(const Key &key)
@@ -206,9 +310,16 @@ namespace pozdnyakov
 
     void remove(const Key &key)
     {
-      Node *node = findNode(root, key);
-      if (node) {
-        removeNode(node);
+      if (AllowDuplicates) {
+        Node *node;
+        while ((node = findNode(root, key)) != nullptr) {
+          removeNode(node);
+        }
+      } else {
+        Node *node = findNode(root, key);
+        if (node) {
+          removeNode(node);
+        }
       }
     }
 
@@ -219,7 +330,7 @@ namespace pozdnyakov
 
     size_t height() const
     {
-      return calculateHeight(root);
+      return static_cast< size_t >(getNodeHeight(root));
     }
 
     iterator begin()
@@ -261,11 +372,11 @@ namespace pozdnyakov
     }
   };
 
-  template< class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > intersect(const BSTree< Key, Value, Compare > &tree1,
-                                          const BSTree< Key, Value, Compare > &tree2)
+  template< class Key, class Value, class Compare, bool AllowDuplicates >
+  BSTree< Key, Value, Compare, AllowDuplicates > intersect(const BSTree< Key, Value, Compare, AllowDuplicates > &tree1,
+                                                           const BSTree< Key, Value, Compare, AllowDuplicates > &tree2)
   {
-    BSTree< Key, Value, Compare > result;
+    BSTree< Key, Value, Compare, AllowDuplicates > result;
     for (auto it = tree1.begin(); it != tree1.end(); ++it) {
       const Key &key = (*it).first;
       if (tree2.contains(key)) {
@@ -275,11 +386,11 @@ namespace pozdnyakov
     return result;
   }
 
-  template< class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > union_(const BSTree< Key, Value, Compare > &tree1,
-                                       const BSTree< Key, Value, Compare > &tree2)
+  template< class Key, class Value, class Compare, bool AllowDuplicates >
+  BSTree< Key, Value, Compare, AllowDuplicates > union_(const BSTree< Key, Value, Compare, AllowDuplicates > &tree1,
+                                                        const BSTree< Key, Value, Compare, AllowDuplicates > &tree2)
   {
-    BSTree< Key, Value, Compare > result;
+    BSTree< Key, Value, Compare, AllowDuplicates > result;
     for (auto it = tree1.begin(); it != tree1.end(); ++it) {
       result.push((*it).first, (*it).second);
     }
@@ -292,11 +403,11 @@ namespace pozdnyakov
     return result;
   }
 
-  template< class Key, class Value, class Compare >
-  BSTree< Key, Value, Compare > complement(const BSTree< Key, Value, Compare > &tree1,
-                                           const BSTree< Key, Value, Compare > &tree2)
+  template< class Key, class Value, class Compare, bool AllowDuplicates >
+  BSTree< Key, Value, Compare, AllowDuplicates > complement(const BSTree< Key, Value, Compare, AllowDuplicates > &tree1,
+                                                            const BSTree< Key, Value, Compare, AllowDuplicates > &tree2)
   {
-    BSTree< Key, Value, Compare > result;
+    BSTree< Key, Value, Compare, AllowDuplicates > result;
     for (auto it = tree1.begin(); it != tree1.end(); ++it) {
       const Key &key = (*it).first;
       if (!tree2.contains(key)) {
