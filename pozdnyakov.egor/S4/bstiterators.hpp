@@ -9,11 +9,11 @@ namespace pozdnyakov
 
   namespace detail
   {
-    template < typename Key, typename Value >
+    template< typename Key, typename Value >
     struct TreeNode;
   }
 
-  template < class Key, class Value >
+  template< class Key, class Value >
   class BSTIterator
   {
   private:
@@ -75,7 +75,7 @@ namespace pozdnyakov
     }
   };
 
-  template < class Key, class Value >
+  template< class Key, class Value >
   class BSTConstIterator
   {
   private:

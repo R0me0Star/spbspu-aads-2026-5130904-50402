@@ -13,7 +13,7 @@ namespace pozdnyakov
 
   namespace detail
   {
-    template < typename Key, typename Value >
+    template< typename Key, typename Value >
     struct TreeNode
     {
       Key key;
@@ -32,7 +32,7 @@ namespace pozdnyakov
     };
   }
 
-  template < class Key, class Value, class Compare = std::less< Key > >
+  template< class Key, class Value, class Compare = std::less< Key > >
   class BSTree
   {
   public:
@@ -261,7 +261,7 @@ namespace pozdnyakov
     }
   };
 
-  template < class Key, class Value, class Compare >
+  template< class Key, class Value, class Compare >
   BSTree< Key, Value, Compare > intersect(const BSTree< Key, Value, Compare > &tree1,
                                           const BSTree< Key, Value, Compare > &tree2)
   {
@@ -275,7 +275,7 @@ namespace pozdnyakov
     return result;
   }
 
-  template < class Key, class Value, class Compare >
+  template< class Key, class Value, class Compare >
   BSTree< Key, Value, Compare > union_(const BSTree< Key, Value, Compare > &tree1,
                                        const BSTree< Key, Value, Compare > &tree2)
   {
@@ -292,7 +292,7 @@ namespace pozdnyakov
     return result;
   }
 
-  template < class Key, class Value, class Compare >
+  template< class Key, class Value, class Compare >
   BSTree< Key, Value, Compare > complement(const BSTree< Key, Value, Compare > &tree1,
                                            const BSTree< Key, Value, Compare > &tree2)
   {
