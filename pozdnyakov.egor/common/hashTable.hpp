@@ -8,7 +8,7 @@
 
 namespace pozdnyakov
 {
-  template < class Key >
+  template< class Key >
   struct DefaultEqual
   {
     bool operator()(const Key &lhs, const Key &rhs) const
@@ -17,7 +17,7 @@ namespace pozdnyakov
     }
   };
 
-  template < class Key, class Value, class Hash, class Equal = DefaultEqual< Key > >
+  template< class Key, class Value, class Hash, class Equal = DefaultEqual< Key > >
   class HashTable
   {
   private:

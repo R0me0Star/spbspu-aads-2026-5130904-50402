@@ -6,7 +6,7 @@
 
 namespace pozdnyakov
 {
-  template < class T >
+  template< class T >
   class Vector
   {
   private:

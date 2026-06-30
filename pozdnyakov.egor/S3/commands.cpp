@@ -166,15 +166,25 @@ namespace pozdnyakov
 
   void cmdCreate(Vector< std::pair< std::string, Graph > > &dict, const Vector< std::string > &tokens)
   {
-    if (tokens.size() < 3 || !utils::isUnsignedNumber(tokens[2])) {
+    if (tokens.size() < 2) {
       printInvalid();
       return;
     }
-    std::size_t n = std::stoul(tokens[2]);
-    if (tokens.size() != 3 + n) {
+
+    std::size_t n = 0;
+    if (tokens.size() >= 3) {
+      if (!utils::isUnsignedNumber(tokens[2])) {
+        printInvalid();
+        return;
+      }
+      n = std::stoul(tokens[2]);
+    }
+
+    if (tokens.size() != 2 && tokens.size() != 3 + n) {
       printInvalid();
       return;
     }
+
     if (!findGraph(dict, tokens[1])) {
       Graph newGraph;
       for (std::size_t i = 0; i < n; ++i) {
