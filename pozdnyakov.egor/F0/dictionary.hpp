@@ -3,7 +3,7 @@
 
 #include <cstddef>
 #include <string>
-#include "list.hpp"
+#include "../common/list.hpp"
 #include "vector.hpp"
 
 namespace pozdnyakov
@@ -51,7 +51,7 @@ namespace pozdnyakov
     bool containsWord(const std::string &engWord) const;
     bool containsTranslation(const std::string &engWord, const std::string &rusWord) const;
 
-    template < typename Func >
+    template< typename Func >
     void traverse(Func cb) const;
 
   private:
@@ -74,15 +74,16 @@ namespace pozdnyakov
 
     void addTranslationToList(detail::WordNode *wordNode, const std::string &rusWord,
                               const std::string &partOfSpeech) const;
+
     void printInOrder(const detail::WordNode *node) const;
     void countNodesAndTranslations(const detail::WordNode *node, std::size_t &wordsCount,
                                    std::size_t &transCount) const;
 
-    template < typename Func >
+    template< typename Func >
     void traverseNode(const detail::WordNode *node, Func cb) const;
   };
 
-  template < typename Func >
+  template< typename Func >
   void AvlDictionary::traverseNode(const detail::WordNode *node, Func cb) const
   {
     if (node == nullptr) {
@@ -93,7 +94,7 @@ namespace pozdnyakov
     traverseNode(node->right_, cb);
   }
 
-  template < typename Func >
+  template< typename Func >
   void AvlDictionary::traverse(Func cb) const
   {
     traverseNode(root_, cb);

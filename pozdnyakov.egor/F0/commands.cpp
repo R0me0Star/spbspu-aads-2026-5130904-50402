@@ -1,13 +1,22 @@
 ﻿#include "commands.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 namespace pozdnyakov
 {
 
+  static void addCmd(CmdList &cmds, const std::string &name, CommandFunc func)
+  {
+    std::pair< std::string, CommandFunc > p;
+    p.first = name;
+    p.second = func;
+    cmds.pushFront(p);
+  }
+
   AvlDictionary *getDict(DictTable &dicts, const std::string &name)
   {
-    for (auto it = dicts.begin(); it != dicts.end(); ++it) {
+    for (auto it = dicts.begin(); !(it == dicts.end()); ++it) {
       if ((*it).first == name) {
         return (*it).second;
       }
@@ -25,7 +34,7 @@ namespace pozdnyakov
       }
       AvlDictionary *d = getDict(dicts, name);
       if (d != nullptr) {
-        list.pushBack(d);
+        list.pushBack(std::move(d));
       } else {
         throw std::invalid_argument("<dictionary '" + name + "' not found>");
       }
@@ -45,7 +54,10 @@ namespace pozdnyakov
 
     AvlDictionary *newDict = new AvlDictionary();
     try {
-      dicts.pushFront(std::make_pair(name, newDict));
+      std::pair< std::string, AvlDictionary * > p;
+      p.first = name;
+      p.second = newDict;
+      dicts.pushFront(p);
       std::cout << "<DICT: " << name << " CREATED>\n";
     } catch (...) {
       delete newDict;
@@ -64,18 +76,21 @@ namespace pozdnyakov
       throw std::invalid_argument("<dictionary not found>");
     }
     delete d;
+
     pozdnyakov::List< std::pair< std::string, AvlDictionary * > > temp;
     while (!dicts.empty()) {
-      auto p = dicts.front();
+      std::pair< std::string, AvlDictionary * > p = dicts.front();
       dicts.popFront();
       if (p.first != name) {
         temp.pushFront(p);
       }
     }
     while (!temp.empty()) {
-      dicts.pushFront(temp.front());
+      std::pair< std::string, AvlDictionary * > p = temp.front();
       temp.popFront();
+      dicts.pushFront(p);
     }
+
     std::cout << "<DROPPED: " << name << ">\n";
   }
 
@@ -200,7 +215,12 @@ namespace pozdnyakov
     AvlDictionary *newDict = new AvlDictionary();
     try {
       filterDictionary(*d, *newDict, pos);
-      dicts.pushFront(std::make_pair(newName, newDict));
+
+      std::pair< std::string, AvlDictionary * > p;
+      p.first = newName;
+      p.second = newDict;
+      dicts.pushFront(p);
+
       std::cout << "<FILTER: " << newName << " CREATED>\n";
     } catch (...) {
       delete newDict;
@@ -223,7 +243,12 @@ namespace pozdnyakov
     AvlDictionary *newDict = new AvlDictionary();
     try {
       unionDictionaries(*newDict, sources);
-      dicts.pushFront(std::make_pair(targetName, newDict));
+
+      std::pair< std::string, AvlDictionary * > p;
+      p.first = targetName;
+      p.second = newDict;
+      dicts.pushFront(p);
+
       std::cout << "<UNION COMPLETED: " << targetName << ">\n";
     } catch (...) {
       delete newDict;
@@ -246,7 +271,12 @@ namespace pozdnyakov
     AvlDictionary *newDict = new AvlDictionary();
     try {
       intersectDictionaries(*newDict, sources);
-      dicts.pushFront(std::make_pair(targetName, newDict));
+
+      std::pair< std::string, AvlDictionary * > p;
+      p.first = targetName;
+      p.second = newDict;
+      dicts.pushFront(p);
+
       std::cout << "<INTERSECT COMPLETED: " << targetName << ">\n";
     } catch (...) {
       delete newDict;
@@ -271,11 +301,16 @@ namespace pozdnyakov
       if (n > 0) {
         pozdnyakov::Vector< const AvlDictionary * > others;
         for (std::size_t i = 1; i < sources.size(); ++i) {
-          others.pushBack(sources[i]);
+          others.pushBack(std::move(sources[i]));
         }
         diffDictionaries(*newDict, *sources[0], others);
       }
-      dicts.pushFront(std::make_pair(targetName, newDict));
+
+      std::pair< std::string, AvlDictionary * > p;
+      p.first = targetName;
+      p.second = newDict;
+      dicts.pushFront(p);
+
       std::cout << "<DIFF COMPLETED: " << targetName << ">\n";
     } catch (...) {
       delete newDict;
@@ -298,6 +333,25 @@ namespace pozdnyakov
     }
     mergeDictionaries(*target, sources);
     std::cout << "<MERGED>\n";
+  }
+
+  void initCommands(CmdList &cmds)
+  {
+    addCmd(cmds, "merge", &cmdMerge);
+    addCmd(cmds, "diff", &cmdDiff);
+    addCmd(cmds, "intersect", &cmdIntersect);
+    addCmd(cmds, "union", &cmdUnion);
+    addCmd(cmds, "filter", &cmdFilter);
+    addCmd(cmds, "count", &cmdCount);
+    addCmd(cmds, "show", &cmdShow);
+    addCmd(cmds, "reverse", &cmdReverse);
+    addCmd(cmds, "translate", &cmdTranslate);
+    addCmd(cmds, "del-trans", &cmdDelTrans);
+    addCmd(cmds, "del-word", &cmdDelWord);
+    addCmd(cmds, "add-trans", &cmdAddTrans);
+    addCmd(cmds, "add-word", &cmdAddWord);
+    addCmd(cmds, "drop", &cmdDrop);
+    addCmd(cmds, "make", &cmdMake);
   }
 
 }

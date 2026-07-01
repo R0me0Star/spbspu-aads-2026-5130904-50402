@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 #include "dictionary.hpp"
-#include "list.hpp"
+#include "../common/list.hpp"
 #include "vector.hpp"
 
 namespace pozdnyakov
@@ -32,6 +32,10 @@ namespace pozdnyakov
   void cmdIntersect(DictTable &dicts, std::istream &in);
   void cmdDiff(DictTable &dicts, std::istream &in);
   void cmdMerge(DictTable &dicts, std::istream &in);
+
+  using CmdList = pozdnyakov::List< std::pair< std::string, CommandFunc > >;
+
+  void initCommands(CmdList &cmds);
 
 }
 

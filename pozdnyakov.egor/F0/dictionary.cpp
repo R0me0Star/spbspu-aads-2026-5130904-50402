@@ -1,9 +1,149 @@
 ﻿#include "dictionary.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 namespace pozdnyakov
 {
+
+  namespace
+  {
+
+    struct FilterFunctor
+    {
+      pozdnyakov::AvlDictionary &target_;
+      const std::string &pos_;
+
+      FilterFunctor(pozdnyakov::AvlDictionary &target, const std::string &pos):
+        target_(target),
+        pos_(pos)
+      {}
+
+      void operator()(const std::string &engWord,
+                      const pozdnyakov::List< pozdnyakov::detail::Translation > &trans) const
+      {
+        for (auto it = trans.cbegin(); !(it == trans.cend()); ++it) {
+          if ((*it).partOfSpeech_ == pos_) {
+            target_.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
+          }
+        }
+      }
+    };
+
+    struct MergeFunctor
+    {
+      pozdnyakov::AvlDictionary &target_;
+
+      MergeFunctor(pozdnyakov::AvlDictionary &target):
+        target_(target)
+      {}
+
+      void operator()(const std::string &engWord,
+                      const pozdnyakov::List< pozdnyakov::detail::Translation > &trans) const
+      {
+        for (auto it = trans.cbegin(); !(it == trans.cend()); ++it) {
+          target_.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
+        }
+      }
+    };
+
+    struct IntersectFunctor
+    {
+      pozdnyakov::AvlDictionary &target_;
+      const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &dicts_;
+
+      IntersectFunctor(pozdnyakov::AvlDictionary &target,
+                       const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &dicts):
+        target_(target),
+        dicts_(dicts)
+      {}
+
+      void operator()(const std::string &engWord,
+                      const pozdnyakov::List< pozdnyakov::detail::Translation > &trans) const
+      {
+        bool inAll = true;
+        for (std::size_t i = 1; i < dicts_.size(); ++i) {
+          if (!dicts_[i]->containsWord(engWord)) {
+            inAll = false;
+            break;
+          }
+        }
+
+        if (inAll) {
+          for (auto it = trans.cbegin(); !(it == trans.cend()); ++it) {
+            bool transInAll = true;
+            for (std::size_t i = 1; i < dicts_.size(); ++i) {
+              if (!dicts_[i]->containsTranslation(engWord, (*it).rusWord_)) {
+                transInAll = false;
+                break;
+              }
+            }
+            if (transInAll) {
+              target_.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
+            }
+          }
+        }
+      }
+    };
+
+    struct DiffFunctor
+    {
+      pozdnyakov::AvlDictionary &target_;
+      const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &others_;
+
+      DiffFunctor(pozdnyakov::AvlDictionary &target,
+                  const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &others):
+        target_(target),
+        others_(others)
+      {}
+
+      void operator()(const std::string &engWord,
+                      const pozdnyakov::List< pozdnyakov::detail::Translation > &trans) const
+      {
+        bool inOthers = false;
+        for (std::size_t i = 0; i < others_.size(); ++i) {
+          if (others_[i]->containsWord(engWord)) {
+            inOthers = true;
+            break;
+          }
+        }
+
+        if (!inOthers) {
+          for (auto it = trans.cbegin(); !(it == trans.cend()); ++it) {
+            target_.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
+          }
+        }
+      }
+    };
+
+    struct ReverseSearchFunctor
+    {
+      const std::string &rusWord_;
+      bool &isFirst_;
+
+      ReverseSearchFunctor(const std::string &rusWord, bool &isFirst):
+        rusWord_(rusWord),
+        isFirst_(isFirst)
+      {}
+
+      void operator()(const std::string &engWord,
+                      const pozdnyakov::List< pozdnyakov::detail::Translation > &trans) const
+      {
+        for (auto it = trans.cbegin(); !(it == trans.cend()); ++it) {
+          if ((*it).rusWord_ == rusWord_) {
+            if (!isFirst_) {
+              std::cout << ", ";
+            }
+            std::cout << engWord;
+            isFirst_ = false;
+            break;
+          }
+        }
+      }
+    };
+
+  }
+
   namespace detail
   {
 
@@ -110,12 +250,16 @@ namespace pozdnyakov
   void AvlDictionary::addTranslationToList(detail::WordNode *wordNode, const std::string &rusWord,
                                            const std::string &partOfSpeech) const
   {
-    for (auto it = wordNode->translations_.begin(); it != wordNode->translations_.end(); ++it) {
+    for (auto it = wordNode->translations_.begin(); !(it == wordNode->translations_.end()); ++it) {
       if ((*it).rusWord_ == rusWord) {
         return;
       }
     }
-    wordNode->translations_.pushFront(detail::Translation{rusWord, partOfSpeech});
+
+    detail::Translation t;
+    t.rusWord_ = rusWord;
+    t.partOfSpeech_ = partOfSpeech;
+    wordNode->translations_.pushFront(t);
   }
 
   detail::WordNode *AvlDictionary::findNode(detail::WordNode *node, const std::string &engWord) const
@@ -148,7 +292,12 @@ namespace pozdnyakov
   {
     if (node == nullptr) {
       detail::WordNode *newNode = new detail::WordNode(engWord);
-      newNode->translations_.pushFront(detail::Translation{rusWord, partOfSpeech});
+
+      detail::Translation t;
+      t.rusWord_ = rusWord;
+      t.partOfSpeech_ = partOfSpeech;
+      newNode->translations_.pushFront(t);
+
       return newNode;
     }
 
@@ -193,8 +342,11 @@ namespace pozdnyakov
 
         node->engWord_ = minNode->engWord_;
         node->translations_.clear();
-        for (auto it = minNode->translations_.begin(); it != minNode->translations_.end(); ++it) {
-          node->translations_.pushFront(*it);
+        for (auto it = minNode->translations_.begin(); !(it == minNode->translations_.end()); ++it) {
+          detail::Translation t;
+          t.rusWord_ = (*it).rusWord_;
+          t.partOfSpeech_ = (*it).partOfSpeech_;
+          node->translations_.pushFront(t);
         }
 
         node->right_ = removeWordNode(node->right_, minNode->engWord_);
@@ -213,7 +365,7 @@ namespace pozdnyakov
   {
     detail::WordNode *node = findNode(root_, engWord);
     if (node == nullptr) {
-      throw std::invalid_argument("<Word '" + engWord + "' not found>");
+      throw std::invalid_argument("<dictionary not found>");
     }
 
     std::string pos = "";
@@ -232,7 +384,7 @@ namespace pozdnyakov
   {
     detail::WordNode *node = findNode(root_, engWord);
     if (node == nullptr) {
-      throw std::invalid_argument("<Word '" + engWord + "' not found>");
+      throw std::invalid_argument("<dictionary not found>");
     }
 
     pozdnyakov::List< detail::Translation > temp;
@@ -245,8 +397,9 @@ namespace pozdnyakov
     }
 
     while (!temp.empty()) {
-      node->translations_.pushFront(temp.front());
+      detail::Translation t = temp.front();
       temp.popFront();
+      node->translations_.pushFront(t);
     }
 
     if (node->translations_.empty()) {
@@ -263,7 +416,7 @@ namespace pozdnyakov
     }
 
     std::cout << engWord << ":\n";
-    for (auto it = node->translations_.begin(); it != node->translations_.end(); ++it) {
+    for (auto it = node->translations_.cbegin(); !(it == node->translations_.cend()); ++it) {
       std::cout << "  [" << (*it).partOfSpeech_ << "]: " << (*it).rusWord_ << "\n";
     }
   }
@@ -279,7 +432,7 @@ namespace pozdnyakov
     if (node == nullptr) {
       return false;
     }
-    for (auto it = node->translations_.begin(); it != node->translations_.end(); ++it) {
+    for (auto it = node->translations_.cbegin(); !(it == node->translations_.cend()); ++it) {
       if ((*it).rusWord_ == rusWord) {
         return true;
       }
@@ -301,11 +454,11 @@ namespace pozdnyakov
     }
     std::cout << "]: ";
 
-    auto it = node->translations_.begin();
-    while (it != node->translations_.end()) {
+    auto it = node->translations_.cbegin();
+    while (!(it == node->translations_.cend())) {
       std::cout << (*it).rusWord_;
       ++it;
-      if (it != node->translations_.end()) {
+      if (!(it == node->translations_.cend())) {
         std::cout << ", ";
       }
     }
@@ -330,7 +483,7 @@ namespace pozdnyakov
     countNodesAndTranslations(node->left_, wordsCount, transCount);
 
     wordsCount++;
-    for (auto it = node->translations_.begin(); it != node->translations_.end(); ++it) {
+    for (auto it = node->translations_.cbegin(); !(it == node->translations_.cend()); ++it) {
       transCount++;
     }
 
@@ -348,26 +501,16 @@ namespace pozdnyakov
   void filterDictionary(const pozdnyakov::AvlDictionary &source, pozdnyakov::AvlDictionary &target,
                         const std::string &partOfSpeech)
   {
-    source.traverse([&target, &partOfSpeech](const std::string &engWord,
-                                             const pozdnyakov::List< detail::Translation > &trans) -> void {
-      for (auto it = trans.begin(); it != trans.end(); ++it) {
-        if ((*it).partOfSpeech_ == partOfSpeech) {
-          target.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
-        }
-      }
-    });
+    FilterFunctor functor(target, partOfSpeech);
+    source.traverse(functor);
   }
 
   void mergeDictionaries(pozdnyakov::AvlDictionary &target,
                          const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &dicts)
   {
+    MergeFunctor functor(target);
     for (std::size_t i = 0; i < dicts.size(); ++i) {
-      dicts[i]->traverse(
-          [&target](const std::string &engWord, const pozdnyakov::List< detail::Translation > &trans) -> void {
-            for (auto it = trans.begin(); it != trans.end(); ++it) {
-              target.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
-            }
-          });
+      dicts[i]->traverse(functor);
     }
   }
 
@@ -383,54 +526,15 @@ namespace pozdnyakov
     if (dicts.empty()) {
       return;
     }
-
-    dicts[0]->traverse(
-        [&target, &dicts](const std::string &engWord, const pozdnyakov::List< detail::Translation > &trans) -> void {
-          bool inAll = true;
-          for (std::size_t i = 1; i < dicts.size(); ++i) {
-            if (!dicts[i]->containsWord(engWord)) {
-              inAll = false;
-              break;
-            }
-          }
-
-          if (inAll) {
-            for (auto it = trans.begin(); it != trans.end(); ++it) {
-              bool transInAll = true;
-              for (std::size_t i = 1; i < dicts.size(); ++i) {
-                if (!dicts[i]->containsTranslation(engWord, (*it).rusWord_)) {
-                  transInAll = false;
-                  break;
-                }
-              }
-
-              if (transInAll) {
-                target.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
-              }
-            }
-          }
-        });
+    IntersectFunctor functor(target, dicts);
+    dicts[0]->traverse(functor);
   }
 
   void diffDictionaries(pozdnyakov::AvlDictionary &target, const pozdnyakov::AvlDictionary &first,
                         const pozdnyakov::Vector< const pozdnyakov::AvlDictionary * > &others)
   {
-    first.traverse(
-        [&target, &others](const std::string &engWord, const pozdnyakov::List< detail::Translation > &trans) -> void {
-          bool inOthers = false;
-          for (std::size_t i = 0; i < others.size(); ++i) {
-            if (others[i]->containsWord(engWord)) {
-              inOthers = true;
-              break;
-            }
-          }
-
-          if (!inOthers) {
-            for (auto it = trans.begin(); it != trans.end(); ++it) {
-              target.addWord(engWord, (*it).rusWord_, (*it).partOfSpeech_);
-            }
-          }
-        });
+    DiffFunctor functor(target, others);
+    first.traverse(functor);
   }
 
   void reverseSearch(const pozdnyakov::AvlDictionary &dict, const std::string &rusWord)
@@ -438,19 +542,8 @@ namespace pozdnyakov
     std::cout << "<REVERSE '" << rusWord << "'>: ";
     bool isFirst = true;
 
-    dict.traverse(
-        [&rusWord, &isFirst](const std::string &engWord, const pozdnyakov::List< detail::Translation > &trans) -> void {
-          for (auto it = trans.begin(); it != trans.end(); ++it) {
-            if ((*it).rusWord_ == rusWord) {
-              if (!isFirst) {
-                std::cout << ", ";
-              }
-              std::cout << engWord;
-              isFirst = false;
-              break;
-            }
-          }
-        });
+    ReverseSearchFunctor functor(rusWord, isFirst);
+    dict.traverse(functor);
 
     if (isFirst) {
       std::cout << "None";
